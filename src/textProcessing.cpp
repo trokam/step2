@@ -46,11 +46,22 @@ void Trokam::TextProcessing::sequences()
 {
     int count= 0;
     boost::tokenizer<> tok(content);
-    for(boost::tokenizer<>::iterator beg=tok.begin(); beg!=tok.end(); ++beg)
+    for(boost::tokenizer<>::iterator it= tok.begin(); it!=tok.end(); it++)
     {
-        count++;
-        std::string token= *beg;
-        std::cout << count << ": " << token << "\n";
+        int limit= 10;
+        
+        for(int maxLen= 1; maxLen<=limit; maxLen++)
+        {
+            int len=0;
+            std::string sequence;
+            for(boost::tokenizer<>::iterator sec= it; ((sec!=tok.end()) && (len<maxLen)); sec++)
+            {
+                std::string token= *sec;
+                sequence+= token + " ";
+                len++;
+            }
+            std::cout << count++ << ": " << sequence << "\n";
+        }
     }
 }
 
