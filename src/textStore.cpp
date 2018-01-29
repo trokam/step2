@@ -72,7 +72,7 @@ void Trokam::TextStore::show(const int &value)
     int count= 0;
     for(std::vector<Trokam::TextOcc>::iterator it= textCollection.begin(); it!=textCollection.end(); ++it)
     {
-        std::cout << "seq: [" << it->text << "] occ: [" << it->occurrence << "]\n";
+        std::cout << "occ: [" << it->occurrence << "]\tseq: [" << it->text << "]\n";
         count++;
         if(count > value)
         {
