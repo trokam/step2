@@ -38,7 +38,8 @@ BIN=./bin
 SOURCES_CRUNCHER= src/mainCruncher.cpp \
                   src/cruncher.cpp \
                   src/fileOps.cpp \
-                  src/textProcessing.cpp
+                  src/textProcessing.cpp \
+                  src/textStore.cpp
 
 OBJECTS_CRUNCHER=$(SOURCES_CRUNCHER:.cpp=.o)
 

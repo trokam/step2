@@ -21,39 +21,48 @@
  * along with Trokam. If not, see <http://www.gnu.org/licenses/>. 
  **********************************************************************/
 
-#ifndef TROKAM_TEXT_PROCESSING_H
-#define TROKAM_TEXT_PROCESSING_H
+#ifndef TROKAM_TEXTSTORE_H
+#define TROKAM_TEXTSTORE_H
 
 /// C++
 #include <string>
+#include <vector>
 
-/// Boost
-#include <boost/scoped_ptr.hpp>
-
-/// Trokam
-#include "textStore.h"
-
+/**
+ * \brief 
+ *
+ **/
 namespace Trokam
 {
-    class TextProcessing
+    struct TextOcc
+    {
+        std::string text;
+        int occurrence;
+    };
+    
+    class TextStore
     {
         public:
         
+            TextStore();
+            void insert(const std::string &text);
+            
             /**
-             * The class is instantiated with a file name and the object
-             * operates now onwards on its content.
+             * Show the first sequences,
+             * sorted descendently by occurrence.
              **/
-            TextProcessing(const std::string &filename);
-
-            /**
-             * Display the sequences of text.
-             **/
-            void sequences(boost::scoped_ptr<Trokam::TextStore> &store);
+            void show(const int &value= 10);
             
         private:
-        
-            std::string content;
+
+            bool sorted;
+            std::vector<TextOcc> textCollection;
+
+            /**
+             * Sort descendently by occurrence.
+             **/
+            void sort();
     };
 }
 
-#endif /// TROKAM_TEXT_PROCESSING_H
+#endif  /// TROKAM_TEXTSTORE_H

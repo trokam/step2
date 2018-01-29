@@ -42,9 +42,8 @@ Trokam::TextProcessing::TextProcessing(const std::string &filename)
     boost::algorithm::to_lower(content);
 }
 
-void Trokam::TextProcessing::sequences()
+void Trokam::TextProcessing::sequences(boost::scoped_ptr<Trokam::TextStore> &store)
 {
-    int count= 0;
     boost::tokenizer<> tok(content);
     for(boost::tokenizer<>::iterator it= tok.begin(); it!=tok.end(); it++)
     {
@@ -54,13 +53,27 @@ void Trokam::TextProcessing::sequences()
         {
             int len=0;
             std::string sequence;
-            for(boost::tokenizer<>::iterator sec= it; ((sec!=tok.end()) && (len<maxLen)); sec++)
+
+            boost::tokenizer<>::iterator sec;
+            for(sec= it; ((sec!=tok.end()) && (len<maxLen)); sec++)
             {
                 std::string token= *sec;
                 sequence+= token + " ";
                 len++;
             }
-            std::cout << count++ << ": " << sequence << "\n";
+            
+            boost::algorithm::trim_if(sequence, boost::algorithm::is_any_of(" \n\r"));
+            store->insert(sequence);
+
+            /**
+             * If the iterator reaches the end of the content,
+             * then jump out of this loop otherwise appear
+             * false repeated sequences.
+             **/
+            if(sec==tok.end())
+            {
+                break;
+            }
         }
     }
 }

@@ -21,9 +21,13 @@
  * along with Trokam. If not, see <http://www.gnu.org/licenses/>. 
  **********************************************************************/
 
+/// Boost
+#include <boost/scoped_ptr.hpp>
+
 /// Trokam
-#include "textProcessing.h"
 #include "cruncher.h"
+#include "textProcessing.h"
+#include "textStore.h"
 
 void Trokam::Cruncher::run()
 {
@@ -33,8 +37,18 @@ void Trokam::Cruncher::run()
     std::string filename= "/tmp/someText.txt";
 
     /**
-     * Get text sequences. 
+     * Creates a store to keep and sort the sequences.
+     **/
+    boost::scoped_ptr<Trokam::TextStore> store(new Trokam::TextStore);
+   
+    /**
+     * Extract text sequences from file and put into the store. 
      **/
     Trokam::TextProcessing tp(filename);
-    tp.sequences();
+    tp.sequences(store);
+
+    /**
+     * Show the most frequent sequences in the file. 
+     **/
+    store->show(100);
 }
