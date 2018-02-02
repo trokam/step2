@@ -18,7 +18,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Trokam. If not, see <http://www.gnu.org/licenses/>. 
+ * along with Trokam. If not, see <http://www.gnu.org/licenses/>.
  **********************************************************************/
 
 #ifndef TROKAM_FILE_OPS_H
@@ -56,6 +56,21 @@ namespace Trokam
              **/
             static void save(const std::string &filename,
                              const std::string &content);
+
+            /**
+             * Delete a file.
+             **/
+            static void rmFile(const std::string &filename);
+
+            /**
+             * Delete a directory.
+             **/
+            static void rmDir(const std::string &dirname);
+            
+            /**
+             * Creates a directory.
+             **/
+            static void mkDir(const std::string &dirname);
     };
 }
 

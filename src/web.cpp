@@ -25,34 +25,38 @@
 #include <iostream>
 
 /// Trokam
-#include "common.h"
-#include "cruncher.h"
+#include "fileOps.h"
 #include "options.h"
+#include "web.h"
 
-/**
- * Cruncher extract information of web pages and local files, and insert
- * it into the database.
- **/
-int main(int argc, const char* argv[])
+Trokam::Web::Web(const Trokam::Options &value): settings(value)
+{}
+
+void Trokam::Web::fetch(const std::string &url,
+                              std::string &content,
+                              std::string &links)
 {
-    /**
-     * Command options could be read from command line and a file.
-     **/
-    Trokam::Options opt(argc, argv);
-    opt.readSettings(CONFIG_FILE);
+    std::string command;
 
     /**
-     * Instantiate the web cruncher.
+     *
      **/
-    Trokam::Cruncher c(opt);
+    std::cout << "getting the plain text ..." << std::endl;
+
+    std::string downloadPlain= settings.workingDir() + "/plain.txt";
+    Trokam::FileOps::rmFile(downloadPlain);
+    command= "lynx -dump -force_html -nolist " + url + " >  " + downloadPlain;
+    system(command.c_str());
+    Trokam::FileOps::read(downloadPlain, content);
 
     /**
-     * Execue the web cruncher.
+     *
      **/
-    c.run();
+    std::cout << "getting the links ..." << std::endl;
 
-    /**
-     * Cleaning up.
-     **/
-    opt.deleteWorkingDirectory();
+    std::string downloadLinks= settings.workingDir() + "/links.txt";
+    Trokam::FileOps::rmFile(downloadLinks);
+    command= "lynx -dump -force_html -listonly -nonumbers " + url + " > " + downloadLinks;
+    system(command.c_str());
+    Trokam::FileOps::read(downloadLinks, links);
 }

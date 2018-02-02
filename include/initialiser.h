@@ -18,11 +18,11 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Trokam. If not, see <http://www.gnu.org/licenses/>. 
+ * along with Trokam. If not, see <http://www.gnu.org/licenses/>.
  **********************************************************************/
 
-#ifndef TROKAM_CRUNCHER_H
-#define TROKAM_CRUNCHER_H
+#ifndef TROKAM_INITIALISER_H
+#define TROKAM_INITIALISER_H
 
 /// C++
 #include <string>
@@ -31,21 +31,22 @@
 #include "options.h"
 
 /**
- * \brief Cruncher extract information of web pages and local files. 
+ * \brief
  *
  **/
 namespace Trokam
 {
-    class Cruncher
+    class Initialiser
     {
         public:
-        
-            Cruncher(const Trokam::Options &value);
-            void run();
-            
+
+            Initialiser(const Trokam::Options &value);
+            void fill();
+
         private:
-        
+
             Trokam::Options settings;
     };
 }
-#endif  /// TROKAM_CRUNCHER_H
+
+#endif  /// TROKAM_INITIALISER_H

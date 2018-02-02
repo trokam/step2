@@ -21,50 +21,50 @@
  * along with Trokam. If not, see <http://www.gnu.org/licenses/>.
  **********************************************************************/
 
-#ifndef TROKAM_TEXTSTORE_H
-#define TROKAM_TEXTSTORE_H
+#ifndef TROKAM_OPTIONS_H
+#define TROKAM_OPTIONS_H
 
 /// C++
 #include <string>
-#include <vector>
 
-/**
- * \brief
- *
- **/
 namespace Trokam
 {
-    struct TextOcc
-    {
-        std::string text;
-        int occurrence;
-    };
-
-    class TextStore
+    class Options
     {
         public:
-
-            TextStore();
-            void insert(const std::string &text);
+            Options();
+            Options(int argc, const char* argv[]);
+            Options(const Options &opt);
+            Options& operator= (const Options &opt);
 
             /**
-             * Show the first sequences,
-             * sorted descendently by occurrence.
-             **/
-            void show(const int &value= 10);
+             * Read the settings from file.
+             */
+            void readSettings(const std::string &filename);
 
-            int size() const;
+            std::string dbHost() const;
+            std::string dbName() const;
+            std::string dbUser() const;
+            std::string dbPass() const;
+            std::string workingDir() const;
+            std::string seedsFile() const;
+            int pagesLimit() const;
+            int level() const;
+
+            void deleteWorkingDirectory();
 
         private:
+            std::string optDbHost;
+            std::string optDbName;
+            std::string optDbUser;
+            std::string optDbPass;
+            std::string optWorkingDir;
+            std::string optSeedsFile;
+            int optPagesLimit;
+            int optLevel;
 
-            bool sorted;
-            std::vector<TextOcc> textCollection;
-
-            /**
-             * Sort descendently by occurrence.
-             **/
-            void sort();
+            void createWorkingDirectory();
     };
 }
 
-#endif  /// TROKAM_TEXTSTORE_H
+#endif /// TROKAM_OPTIONS_H

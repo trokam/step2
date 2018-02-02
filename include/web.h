@@ -21,8 +21,8 @@
  * along with Trokam. If not, see <http://www.gnu.org/licenses/>. 
  **********************************************************************/
 
-#ifndef TROKAM_CRUNCHER_H
-#define TROKAM_CRUNCHER_H
+#ifndef TROKAM_WEB_H
+#define TROKAM_WEB_H
 
 /// C++
 #include <string>
@@ -31,21 +31,24 @@
 #include "options.h"
 
 /**
- * \brief Cruncher extract information of web pages and local files. 
+ * \brief
  *
  **/
 namespace Trokam
 {
-    class Cruncher
+    class Web
     {
         public:
         
-            Cruncher(const Trokam::Options &value);
-            void run();
-            
+            Web(const Trokam::Options &value);
+        
+            void fetch(const std::string &url,
+                             std::string &content,
+                             std::string &links);
+                             
         private:
         
             Trokam::Options settings;
     };
 }
-#endif  /// TROKAM_CRUNCHER_H
+#endif  /// TROKAM_WEB_H

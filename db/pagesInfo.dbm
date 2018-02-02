@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+CAUTION: Do not modify this file unless you know what you are doing.
+         Unexpected results may occur if the code is changed deliberately.
+-->
+<dbmodel pgmodeler-ver="0.8.1" last-position="14,10" last-zoom="1"
+	 default-schema="public" default-owner="postgres">
+<database name="new_database">
+</database>
+
+<schema name="public" protected="true" fill-color="#e1e1e1" sql-disabled="true">
+</schema>
+
+<table name="sequences">
+	<schema name="public"/>
+	<role name="postgres"/>
+	<position x="37" y="72"/>
+	<column name="index" not-null="true">
+		<type name="serial"/>
+	</column>
+	<column name="value" not-null="true">
+		<type name="varchar" length="1000"/>
+	</column>
+	<constraint name="text_pkey" type="pk-constr" table="public.sequences">
+		<columns names="index" ref-type="src-columns"/>
+	</constraint>
+	<constraint name="value_unique" type="uq-constr" table="public.sequences">
+		<columns names="value" ref-type="src-columns"/>
+	</constraint>
+</table>
+
+<table name="page">
+	<schema name="public"/>
+	<role name="postgres"/>
+	<position x="593" y="343"/>
+	<column name="index" not-null="true">
+		<type name="serial"/>
+	</column>
+	<column name="protocol" not-null="true">
+		<type name="varchar" length="10"/>
+	</column>
+	<column name="domain" not-null="true">
+		<type name="varchar" length="250"/>
+	</column>
+	<column name="path" not-null="true">
+		<type name="varchar" length="2500"/>
+	</column>
+	<column name="level" not-null="true">
+		<type name="integer"/>
+	</column>
+	<column name="processing" not-null="true">
+		<type name="bool"/>
+	</column>
+	<column name="crunched" not-null="true">
+		<type name="date"/>
+	</column>
+	<constraint name="page_pkey" type="pk-constr" table="public.page">
+		<columns names="index" ref-type="src-columns"/>
+	</constraint>
+</table>
+
+<table name="page_seq">
+	<schema name="public"/>
+	<role name="postgres"/>
+	<position x="313" y="236"/>
+	<column name="count" not-null="true">
+		<type name="integer"/>
+	</column>
+
+	<customidxs object-type="column">
+		<object name="index_page" index="0"/>
+		<object name="index_sequences" index="1"/>
+	</customidxs>
+
+	<customidxs object-type="constraint">
+		<object name="page_fk" index="0"/>
+		<object name="sequences_fk" index="1"/>
+	</customidxs>
+</table>
+
+<relationship name="page_has_many_page_text" type="rel1n"
+	 src-col-pattern="{sc}_{st}"
+	 pk-pattern="{dt}_pk" uq-pattern="{dt}_uq"
+	 src-fk-pattern="{st}_fk"
+	 custom-color="#baa82a"
+	 src-table="public.page"
+	 dst-table="public.page_seq"
+	 src-required="false" dst-required="false">
+	<line>
+		<position x="562.084" y="370.1"/>
+	<position x="562.084" y="263.1"/>
+	</line>
+</relationship>
+
+<relationship name="text_has_many_page_text" type="rel1n"
+	 src-col-pattern="{sc}_{st}"
+	 pk-pattern="{dt}_pk" uq-pattern="{dt}_uq"
+	 src-fk-pattern="{st}_fk"
+	 custom-color="#980993"
+	 src-table="public.sequences"
+	 dst-table="public.page_seq"
+	 src-required="false" dst-required="false">
+	<label ref-type="src-label">
+		<position x="6.13187" y="2.8"/>
+	</label>
+</relationship>
+
+<constraint name="unique_page_text" type="uq-constr" table="public.page_seq">
+	<columns names="index_page,index_sequences" ref-type="src-columns"/>
+</constraint>
+
+<table name="global_occ">
+	<schema name="public"/>
+	<role name="postgres"/>
+	<position x="426" y="54"/>
+	<column name="count">
+		<type name="integer"/>
+	</column>
+
+	<customidxs object-type="column">
+		<object name="index_sequences" index="1"/>
+	</customidxs>
+
+	<customidxs object-type="constraint">
+		<object name="sequences_fk" index="0"/>
+	</customidxs>
+</table>
+
+<relationship name="text_has_many_global_occ" type="rel1n"
+	 src-col-pattern="{sc}_{st}"
+	 pk-pattern="{dt}_pk" uq-pattern="{dt}_uq"
+	 src-fk-pattern="{st}_fk"
+	 custom-color="#2959d3"
+	 src-table="public.sequences"
+	 dst-table="public.global_occ"
+	 src-required="false" dst-required="false"/>
+
+<table name="content">
+	<schema name="public"/>
+	<role name="postgres"/>
+	<position x="322" y="418"/>
+	<column name="value">
+		<type name="text"/>
+	</column>
+
+	<customidxs object-type="column">
+		<object name="index_page" index="0"/>
+	</customidxs>
+
+	<customidxs object-type="constraint">
+		<object name="content_uq" index="1"/>
+		<object name="page_fk" index="0"/>
+	</customidxs>
+</table>
+
+<relationship name="content_has_one_page" type="rel11"
+	 src-col-pattern="{sc}_{st}"
+	 pk-pattern="{dt}_pk" uq-pattern="{dt}_uq"
+	 src-fk-pattern="{st}_fk"
+	 custom-color="#cd30de"
+	 src-table="public.page"
+	 dst-table="public.content"
+	 src-required="false" dst-required="false"/>
+
+</dbmodel>

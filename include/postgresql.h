@@ -18,34 +18,43 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Trokam. If not, see <http://www.gnu.org/licenses/>. 
+ * along with Trokam. If not, see <http://www.gnu.org/licenses/>.
  **********************************************************************/
 
-#ifndef TROKAM_CRUNCHER_H
-#define TROKAM_CRUNCHER_H
+#ifndef TROKAM_POSTGRESQL_H
+#define TROKAM_POSTGRESQL_H
 
 /// C++
 #include <string>
+
+/// Boost
+#include <boost/scoped_ptr.hpp>
+
+/// Postgresql
+#include <pqxx/pqxx>
 
 /// Trokam
 #include "options.h"
 
 /**
- * \brief Cruncher extract information of web pages and local files. 
  *
  **/
 namespace Trokam
 {
-    class Cruncher
+    class Postgresql
     {
         public:
         
-            Cruncher(const Trokam::Options &value);
-            void run();
-            
+            Postgresql(const Trokam::Options &value);
+            ~Postgresql();
+
+            void execSql(const std::string &sentence);
+            void execSql(const std::string &sentence, boost::scoped_ptr<pqxx::result> &answer);
+
         private:
         
-            Trokam::Options settings;
+            pqxx::connection *dbConnection;
     };
 }
-#endif  /// TROKAM_CRUNCHER_H
+
+#endif /// TROKAM_POSTGRESQL_H

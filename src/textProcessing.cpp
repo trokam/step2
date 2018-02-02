@@ -18,37 +18,35 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Trokam. If not, see <http://www.gnu.org/licenses/>. 
+ * along with Trokam. If not, see <http://www.gnu.org/licenses/>.
  **********************************************************************/
 
 /// C++
 #include <iostream>
+#include <sstream>
 
 /// Boost
 #include <boost/algorithm/string.hpp>
 #include <boost/tokenizer.hpp>
 
 /// Trokam
-#include "fileOps.h"
+#include "common.h"
 #include "textProcessing.h"
 
-Trokam::TextProcessing::TextProcessing(const std::string &filename)
+void Trokam::TextProcessing::extractSequences(std::string &content,
+                                              boost::scoped_ptr<Trokam::TextStore> &store)
 {
-    content= Trokam::FileOps::read(filename);
- 
-    /**
-     * All text is converted to lower case.
-     **/
-    boost::algorithm::to_lower(content);
-}
+    std::cout << "getting sequences ..." << std::endl;
 
-void Trokam::TextProcessing::sequences(boost::scoped_ptr<Trokam::TextStore> &store)
-{
+    boost::algorithm::to_lower(content);
+
+    // std::cout << "text: " << content.substr(0, 200) << std::endl;
+
     boost::tokenizer<> tok(content);
     for(boost::tokenizer<>::iterator it= tok.begin(); it!=tok.end(); it++)
     {
-        int limit= 10;
-        
+        int limit= 6;
+
         for(int maxLen= 1; maxLen<=limit; maxLen++)
         {
             int len=0;
@@ -61,7 +59,7 @@ void Trokam::TextProcessing::sequences(boost::scoped_ptr<Trokam::TextStore> &sto
                 sequence+= token + " ";
                 len++;
             }
-            
+
             boost::algorithm::trim_if(sequence, boost::algorithm::is_any_of(" \n\r"));
             store->insert(sequence);
 
@@ -78,3 +76,66 @@ void Trokam::TextProcessing::sequences(boost::scoped_ptr<Trokam::TextStore> &sto
     }
 }
 
+void Trokam::TextProcessing::extractUrls(std::string &links,
+                                         boost::scoped_ptr<Trokam::TextStore> &bag)
+{
+    std::istringstream input(links);
+    for(std::string line; std::getline(input, line);)
+    {
+        /**
+         * Trimming of unwanted characters.
+         **/
+        boost::algorithm::trim_if(line, boost::algorithm::is_any_of(" \n\r\""));
+
+        /**
+         * Verify that it starts with http or https.
+         **/
+        const std::string first7= line.substr(0, 7);
+        const std::string first8= line.substr(0, 8);
+
+        if((first7==HTTP) || (first8==HTTPS))
+        {
+            bag->insert(line);
+        }
+    }
+}
+
+bool Trokam::TextProcessing::splitUrl(const std::string &url,
+                                            std::string &protocol,
+                                            std::string &domain,
+                                            std::string &path)
+{
+    /**
+     * Get the protocol.
+     * For instance 'http://'
+     **/
+    std::size_t twoSlash= url.find("//");
+    if (twoSlash == std::string::npos)
+    {
+        return false;
+    }
+    else
+    {
+        protocol= url.substr(0, twoSlash+2);
+    }
+
+    /**
+     * Get the domain and the path.
+     * For instance, domain is 'www.trokam.com'
+     * and path is '/some/interesting/page.html'
+     **/
+    std::size_t firstSlash= url.find('/', twoSlash+3);
+    if (firstSlash != std::string::npos)
+    {
+        domain= url.substr(twoSlash+2, firstSlash-(twoSlash+2));
+        path= url.substr(firstSlash+1, url.length()-firstSlash-1);
+    }
+    else
+    {
+        std::size_t end= url.length()-1;
+        domain= url.substr(twoSlash+2, end-(twoSlash+2)+1);
+        path= "";
+    }
+
+    return true;
+}

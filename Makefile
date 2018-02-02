@@ -27,7 +27,9 @@ CPPFLAGS=-c -std=c++14 -Wall -Wcpp -I./include
 
 LDFLAGS=-g
 
-LDLIBS=-lboost_system
+LDLIBS= -lboost_system \
+        -lboost_program_options \
+        -lpqxx
 
 BIN=./bin
 
@@ -38,16 +40,32 @@ BIN=./bin
 SOURCES_CRUNCHER= src/mainCruncher.cpp \
                   src/cruncher.cpp \
                   src/fileOps.cpp \
+                  src/infoStore.cpp \
+                  src/options.cpp \
+                  src/postgresql.cpp \
                   src/textProcessing.cpp \
-                  src/textStore.cpp
+                  src/textStore.cpp \
+                  src/web.cpp
 
 OBJECTS_CRUNCHER=$(SOURCES_CRUNCHER:.cpp=.o)
+
+SOURCES_INITIALISER= src/mainInitialiser.cpp \
+                     src/fileOps.cpp \
+                     src/infoStore.cpp \
+                     src/initialiser.cpp \
+                     src/options.cpp \
+                     src/postgresql.cpp \
+                     src/textProcessing.cpp \
+                     src/textStore.cpp
+
+OBJECTS_INITIALISER=$(SOURCES_INITIALISER:.cpp=.o)
+
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # targets
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-all: cruncher
+all: cruncher initialiser
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # individual recipes
@@ -55,6 +73,9 @@ all: cruncher
 
 cruncher: $(OBJECTS_CRUNCHER)
 	$(CC) $(LDFLAGS) $(OBJECTS_CRUNCHER) -o $(BIN)/$@ $(LDLIBS)
+
+initialiser: $(OBJECTS_INITIALISER)
+	$(CC) $(LDFLAGS) $(OBJECTS_INITIALISER) -o $(BIN)/$@ $(LDLIBS)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # These are the list of files and the automatically

@@ -72,3 +72,21 @@ void Trokam::FileOps::save(const std::string &filename,
     out << content;
     out.close();
 }
+
+void Trokam::FileOps::rmFile(const std::string &filename)
+{
+    std::string command= "rm -f " + filename;
+    system(command.c_str());
+}
+
+void Trokam::FileOps::rmDir(const std::string &dirname)
+{
+    std::string command= "rm -rf " +  dirname;
+    system(command.c_str());    
+}
+
+void Trokam::FileOps::mkDir(const std::string &dirname)
+{
+    std::string command= "mkdir -p " +  dirname;
+    system(command.c_str());    
+}

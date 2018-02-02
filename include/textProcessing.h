@@ -18,7 +18,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Trokam. If not, see <http://www.gnu.org/licenses/>. 
+ * along with Trokam. If not, see <http://www.gnu.org/licenses/>.
  **********************************************************************/
 
 #ifndef TROKAM_TEXT_PROCESSING_H
@@ -38,21 +38,26 @@ namespace Trokam
     class TextProcessing
     {
         public:
-        
-            /**
-             * The class is instantiated with a file name and the object
-             * operates now onwards on its content.
-             **/
-            TextProcessing(const std::string &filename);
 
             /**
-             * Display the sequences of text.
+             * Extract the sequences of text.
              **/
-            void sequences(boost::scoped_ptr<Trokam::TextStore> &store);
-            
-        private:
-        
-            std::string content;
+            static void extractSequences(std::string &content,
+                                         boost::scoped_ptr<Trokam::TextStore> &store);
+
+            /**
+             * Extract the sequences of text.
+             **/
+            static void extractUrls(std::string &links,
+                                    boost::scoped_ptr<Trokam::TextStore> &urlBag);
+
+            /**
+             * Split the URL into protocol, domain and path.
+             **/
+            static bool splitUrl(const std::string &url,
+                                       std::string &protocol,
+                                       std::string &domain,
+                                       std::string &path);
     };
 }
 

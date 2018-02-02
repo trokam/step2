@@ -18,7 +18,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Trokam. If not, see <http://www.gnu.org/licenses/>. 
+ * along with Trokam. If not, see <http://www.gnu.org/licenses/>.
  **********************************************************************/
 
 /// C++
@@ -39,7 +39,7 @@ void Trokam::TextStore::insert(const std::string &text)
 
     /**
      * Compare the text in the argument to each one of the texts
-     * already stored. If a match is found then its occurrence is 
+     * already stored. If a match is found then its occurrence is
      * increased in one.
      **/
     for(std::vector<Trokam::TextOcc>::iterator it= textCollection.begin(); it!=textCollection.end(); ++it)
@@ -50,7 +50,7 @@ void Trokam::TextStore::insert(const std::string &text)
             return;
         }
     }
-    
+
     /**
      * Reaching here means that the text was not found in
      * the collection. A new one is inserted.
@@ -68,7 +68,7 @@ void Trokam::TextStore::show(const int &value)
         sort();
         sorted= true;
     }
-    
+
     int count= 0;
     for(std::vector<Trokam::TextOcc>::iterator it= textCollection.begin(); it!=textCollection.end(); ++it)
     {
@@ -81,13 +81,18 @@ void Trokam::TextStore::show(const int &value)
     }
 }
 
+int Trokam::TextStore::size() const
+{
+    return textCollection.size();
+}
+
 void Trokam::TextStore::sort()
-{   
+{
     std::sort(textCollection.begin(),
               textCollection.end(),
               [](Trokam::TextOcc a, Trokam::TextOcc b)
                 {
-                    return (a.occurrence > b.occurrence);   
+                    return (a.occurrence > b.occurrence);
                 }
              );
 }
