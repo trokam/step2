@@ -47,29 +47,46 @@ namespace Trokam
 
             InfoStore(const Trokam::Options &value);
 
-            void getUrlForProcessing(const int &level, int &index, std::string &url);
+            void getUrlForProcessing(int &index,
+                                     std::string &url,
+                                     int &level);
 
-            int getUrlIndex(const std::string &url);
-
-            void insertUrl(const std::string &url,
-                           const int &level);
-
-            // void insertSequences(boost::scoped_ptr<Trokam::TextStore> &data);
+            void insertPage(const std::string &url,
+                            const int &level);
 
             void insertPage(const int &index,
                             const boost::scoped_ptr<Trokam::TextStore> &seqBag,
-                            const boost::scoped_ptr<Trokam::TextStore> &urlBag,
-                            const std::string &content);
+                            const std::string &links,
+                            const std::string &content,
+                            const int &level);
 
         private:
 
             Trokam::Options settings;
             Trokam::Postgresql db;
 
-            void insertSequences(const boost::scoped_ptr<Trokam::TextStore> &bag);
-            void insertUrls(const boost::scoped_ptr<Trokam::TextStore> &bag);
-            void insertPageContent(const std::string &value);
-            void setCrunched(const int &index);
+            int insertOneSequence(const std::string &value);
+
+            void insertSevSequences(const int &index,
+                                    const boost::scoped_ptr<Trokam::TextStore> &bag);
+
+            void insertUrls(const std::string &links,
+                            const int &level);
+
+            void deleteSeqOccOfPage(const int &pageIndex);
+
+            void insertSeqOccInPage(const int &pageIndex,
+                                    const int &seqIndex,
+                                    const int &occurrence);
+
+            void setCrunched(const int &pageIndex);
+
+            void savePageContent(const int &pageIndex,
+                                 const std::string &value);
+
+            void getDirFile(const int &pageIndex,
+                                  std::string &directory,
+                                  std::string &file);
     };
 }
 

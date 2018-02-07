@@ -23,7 +23,7 @@
 
 CC=c++
 
-CPPFLAGS=-c -std=c++14 -Wall -Wcpp -I./include
+CPPFLAGS=-c -std=c++14 -Wall -Wcpp -O1 -I./include
 
 LDFLAGS=-g
 

@@ -44,23 +44,21 @@ void Trokam::Cruncher::run()
 
     while(pages < settings.pagesLimit())
     {
-        /**
-         * File location.
-         **/
-        // std::string filename= "/tmp/someText.txt";
-
         std::string content, links;
 
         /**
          * Get an URL from the database.
          **/
-        int index;
+        int index, level;
         std::string url;
-        pi.getUrlForProcessing(settings.level(), index, url);
+        pi.getUrlForProcessing(index, url, level);
 
-        std::cout << "\nindex: " << index << " url: '" << url << "'" << std::endl;
+        std::cout << "\nprocessing index: " << index
+                               << " url: '" << url
+                               << "' level: " << level
+                               << "'" << std::endl;
 
-        if((index != -1) && (url != ""))
+        if((index != -1) || (url != ""))
         {
             /**
              * Fetch the URL content.
@@ -69,41 +67,25 @@ void Trokam::Cruncher::run()
             w.fetch(url, content, links);
 
             /**
-             * Creates bags to keep the sequences and links.
+             * Creates an empty bag to keep the sequences.
+             * Then, extract text sequences from content and their
+             * number of occurrences from page content
+             * and put into the bag.
              **/
             boost::scoped_ptr<Trokam::TextStore> seqBag(new Trokam::TextStore);
-            boost::scoped_ptr<Trokam::TextStore> urlBag(new Trokam::TextStore);
-
-            /**
-             * Extract text sequences from file and put into the store.
-             **/
-            // Trokam::TextProcessing tp(filename);
-            // tp.sequences(store);
-
-            /**
-             * Extract text sequences and their number of occurrences
-             * from page content and put into the bag.
-             **/
             Trokam::TextProcessing::extractSequences(content, seqBag);
-
-            /**
-             * Extract urls from the links and put into the bag.
-             **/
-            Trokam::TextProcessing::extractUrls(links, urlBag);
 
             /**
              * Show the most frequent sequences in the file.
              **/
-            // store->show(100);
-            std::cout << "content length is " << content.length() << "\n";
-            std::cout << "extracted " << seqBag->size() << " sequences\n";
-            std::cout << "extracted " << urlBag->size() << " urls\n";
+            std::cout << "content length: " << content.length() << "\n";
+            std::cout << "extracted: " << seqBag->size() << " sequences\n";
+            std::cout << "complexity: " << float(seqBag->size())/float(content.length()) << "\n";
 
             /**
-             * Insert the sequences, urls and content in the database.
+             * Insert the page's sequences, urls and content in the infoStore.
              **/
-            //pi.insertSequences(store);
-            pi.insertPage(index, seqBag, urlBag, content);
+            pi.insertPage(index, seqBag, links, content, level);
 
             pages++;
         }

@@ -18,9 +18,9 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Trokam. If not, see <http://www.gnu.org/licenses/>. 
+ * along with Trokam. If not, see <http://www.gnu.org/licenses/>.
  **********************************************************************/
- 
+
 /// C++
 #include <iostream>
 #include <fstream>
@@ -76,17 +76,31 @@ void Trokam::FileOps::save(const std::string &filename,
 void Trokam::FileOps::rmFile(const std::string &filename)
 {
     std::string command= "rm -f " + filename;
-    system(command.c_str());
+    const int status= system(command.c_str());
+    if(status != 0)
+    {
+        std::cerr << "failure on deleting file: " << filename << "\n";
+    }
 }
 
 void Trokam::FileOps::rmDir(const std::string &dirname)
 {
     std::string command= "rm -rf " +  dirname;
-    system(command.c_str());    
+    // system(command.c_str());
+    const int status= system(command.c_str());
+    if(status != 0)
+    {
+        std::cerr << "failure on deleting directory: " << dirname << "\n";
+    }
 }
 
 void Trokam::FileOps::mkDir(const std::string &dirname)
 {
     std::string command= "mkdir -p " +  dirname;
-    system(command.c_str());    
+    // system(command.c_str());
+    const int status= system(command.c_str());
+    if(status != 0)
+    {
+        std::cerr << "failure on creating directory: " << dirname << "\n";
+    }
 }

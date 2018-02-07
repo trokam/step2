@@ -44,15 +44,17 @@ namespace Trokam
     class Postgresql
     {
         public:
-        
+
             Postgresql(const Trokam::Options &value);
             ~Postgresql();
 
             void execSql(const std::string &sentence);
             void execSql(const std::string &sentence, boost::scoped_ptr<pqxx::result> &answer);
 
+            static void extract(const boost::scoped_ptr<pqxx::result> &answer, int &value);
+
         private:
-        
+
             pqxx::connection *dbConnection;
     };
 }

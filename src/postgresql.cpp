@@ -102,8 +102,9 @@ void Trokam::Postgresql::execSql(const std::string &sentence)
          * The sql_error exception class gives us
          * some extra information.
          **/
-        std::cerr << "SQL error: " << e.what() << "\n";
-        std::cerr << "Query was: " << e.query() << std::endl;
+        // std::cerr << "SQL error: " << e.what() << "\n";
+        // std::cerr << "Query was: " << e.query() << std::endl;
+        throw(e);
     }
     catch(const std::exception &e)
     {
@@ -154,8 +155,9 @@ void Trokam::Postgresql::execSql(const std::string &sentence,
          * The sql_error exception class gives us
          * some extra information.
          **/
-        std::cerr << "SQL error: " << e.what() << "\n";
-        std::cerr << "Query was: " << e.query() << std::endl;
+        // std::cerr << "SQL error: " << e.what() << "\n";
+        // std::cerr << "Query was: " << e.query() << std::endl;
+        throw e;
     }
     catch(const std::exception &e)
     {
@@ -171,5 +173,14 @@ void Trokam::Postgresql::execSql(const std::string &sentence,
          * This is unexpected.
          **/
         std::cerr << "Unhandled exception\n";
+    }
+}
+
+void Trokam::Postgresql::extract(const boost::scoped_ptr<pqxx::result> &answer, int &value)
+{
+    const pqxx::result::const_iterator col= answer->begin();
+    if(col != answer->end())
+    {
+        value= col[0].as(int());
     }
 }

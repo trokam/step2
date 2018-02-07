@@ -58,6 +58,15 @@ namespace Trokam
                                        std::string &protocol,
                                        std::string &domain,
                                        std::string &path);
+
+
+            static std::string leftPadding(const std::string &text,
+                                           const int &total_length,
+                                           const std::string &fill= " ");
+
+            static std::string rightPadding(const std::string &text,
+                                            const int &total_length,
+                                            const std::string &fill= " ");
     };
 }
 

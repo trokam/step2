@@ -18,7 +18,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Trokam. If not, see <http://www.gnu.org/licenses/>. 
+ * along with Trokam. If not, see <http://www.gnu.org/licenses/>.
  **********************************************************************/
 
 #ifndef TROKAM_WEB_H
@@ -39,15 +39,15 @@ namespace Trokam
     class Web
     {
         public:
-        
+
             Web(const Trokam::Options &value);
-        
+
             void fetch(const std::string &url,
                              std::string &content,
                              std::string &links);
-                             
+
         private:
-        
+
             Trokam::Options settings;
     };
 }

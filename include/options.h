@@ -48,6 +48,7 @@ namespace Trokam
             std::string dbPass() const;
             std::string workingDir() const;
             std::string seedsFile() const;
+            std::string contentDir() const;
             int pagesLimit() const;
             int level() const;
 
@@ -60,6 +61,7 @@ namespace Trokam
             std::string optDbPass;
             std::string optWorkingDir;
             std::string optSeedsFile;
+            std::string optContentDir;
             int optPagesLimit;
             int optLevel;
 

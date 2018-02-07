@@ -55,6 +55,8 @@ namespace Trokam
 
             int size() const;
 
+            TextOcc get(const int &id);
+
         private:
 
             bool sorted;

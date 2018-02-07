@@ -108,6 +108,9 @@ void Trokam::Options::readSettings(const std::string &filename)
         optDbName= pt.get<std::string>("database.name");
         optDbUser= pt.get<std::string>("database.user");
         optDbPass= pt.get<std::string>("database.pass");
+        optContentDir= pt.get<std::string>("content.directory");
+
+        std::cout << "content dir: " << optContentDir << "\n";
     }
     catch(const std::exception& e)
     {
@@ -125,6 +128,7 @@ Trokam::Options::Options(const Trokam::Options &opt)
     optDbPass= opt.dbPass();
     optWorkingDir= opt.workingDir();
     optSeedsFile= opt.seedsFile();
+    optContentDir= opt.contentDir();
     optPagesLimit = opt.pagesLimit();
     optLevel = opt.level();
 }
@@ -151,6 +155,7 @@ Trokam::Options& Trokam::Options::operator= (const Trokam::Options &opt)
     optDbPass= opt.dbPass();
     optWorkingDir= opt.workingDir();
     optSeedsFile= opt.seedsFile();
+    optContentDir= opt.contentDir();
     optPagesLimit = opt.pagesLimit();
     optLevel = opt.level();
 
@@ -190,6 +195,11 @@ std::string Trokam::Options::seedsFile() const
     return optSeedsFile;
 }
 
+std::string Trokam::Options::contentDir() const
+{
+    return optContentDir;
+}
+
 int Trokam::Options::pagesLimit() const
 {
     return optPagesLimit;
@@ -209,6 +219,6 @@ void Trokam::Options::createWorkingDirectory()
 
 void Trokam::Options::deleteWorkingDirectory()
 {
-    std::cout << "------ deleting: '" << optWorkingDir << "'\n";
+    std::cout << "deleting: '" << optWorkingDir << "'\n";
     Trokam::FileOps::rmDir(optWorkingDir);
 }

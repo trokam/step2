@@ -60,16 +60,11 @@ void Trokam::Initialiser::fill()
         boost::algorithm::trim_if(line, boost::algorithm::is_any_of(" \n\r\""));
 
         /**
-         *
-         **/
-        // Verify that it starts with http or https
-
-        /**
-         ** Inserting an individual URL.
+         ** Inserting a page, it is just the URL without content.
          **/
         try
         {
-            info.insertUrl(line, 0);
+            info.insertPage(line, 0);
             std::cout << "inserted URL '" <<  line << "'\n";
             count++;
         }

@@ -45,7 +45,7 @@ void Trokam::TextProcessing::extractSequences(std::string &content,
     boost::tokenizer<> tok(content);
     for(boost::tokenizer<>::iterator it= tok.begin(); it!=tok.end(); it++)
     {
-        int limit= 6;
+        int limit= 5;
 
         for(int maxLen= 1; maxLen<=limit; maxLen++)
         {
@@ -138,4 +138,35 @@ bool Trokam::TextProcessing::splitUrl(const std::string &url,
     }
 
     return true;
+}
+
+std::string Trokam::TextProcessing::leftPadding(const std::string &text,
+                                                const int &totalLength,
+                                                const std::string &fill)
+{
+    std::string piece;
+    int diff= totalLength-text.length();
+
+    for (int i=0; i<diff; i++)
+    {
+        piece+= fill;
+    }
+
+    return (piece + text);
+}
+
+
+std::string Trokam::TextProcessing::rightPadding(const std::string &text,
+                                                 const int &totalLength,
+                                                 const std::string &fill)
+{
+    std::string piece;
+    int diff= totalLength-text.length();
+
+    for (int i=0; i<diff; i++)
+    {
+        piece+= fill;
+    }
+
+    return (text + piece);
 }

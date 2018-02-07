@@ -86,6 +86,11 @@ int Trokam::TextStore::size() const
     return textCollection.size();
 }
 
+Trokam::TextOcc Trokam::TextStore::get(const int &id)
+{
+    return textCollection[id];
+}
+
 void Trokam::TextStore::sort()
 {
     std::sort(textCollection.begin(),
