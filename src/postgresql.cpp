@@ -85,7 +85,7 @@ void Trokam::Postgresql::execSql(const std::string &sentence)
         pqxx::work T(*dbConnection, "execute_no_answer");
 
         /**
-         * Perform a query on the database, storing result tuples in R.
+         * Perform a query on the database, there are no results.
          **/
         T.exec(sentence);
 
@@ -138,7 +138,7 @@ void Trokam::Postgresql::execSql(const std::string &sentence,
         pqxx::work T(*dbConnection, "execute");
 
         /**
-         * Perform a query on the database, storing result tuples in R.
+         * Perform a query on the database, storing result in answer.
          **/
         answer.reset(new pqxx::result(T.exec(sentence)));
 
@@ -158,6 +158,60 @@ void Trokam::Postgresql::execSql(const std::string &sentence,
         // std::cerr << "SQL error: " << e.what() << "\n";
         // std::cerr << "Query was: " << e.query() << std::endl;
         throw e;
+    }
+    catch(const std::exception &e)
+    {
+        /**
+         * All exceptions thrown by libpqxx are
+         * derived from std::exception.
+         **/
+        std::cerr << "Exception: " << e.what() << std::endl;
+    }
+    catch(...)
+    {
+        /**
+         * This is unexpected.
+         **/
+        std::cerr << "Unhandled exception\n";
+    }
+}
+
+/**
+ *
+ **/
+// void Trokam::Postgresql::execSevSql(const std::vector<std::string> &bundle)
+void Trokam::Postgresql::execSevSql(std::vector<std::string> &bundle)
+{
+    try
+    {
+        /**
+         * Begin a transaction acting on our current connection.
+         **/
+        pqxx::work T(*dbConnection, "execute_several_no_answer");
+
+        /**
+         *
+         **/
+        for(std::vector<std::string>::iterator it= bundle.begin(); it!=bundle.end(); ++it)
+        {
+            const std::string sentence= *it;
+            T.exec(sentence);
+        }
+
+        /**
+         *
+         **/
+        T.commit();
+    }
+    catch(const pqxx::sql_error &e)
+    {
+        /**
+         * The sql_error exception class gives us
+         * some extra information.
+         **/
+        std::cerr << "SQL error: " << e.what() << "\n";
+        std::cerr << "Query was: " << e.query() << std::endl;
+        throw(e);
     }
     catch(const std::exception &e)
     {

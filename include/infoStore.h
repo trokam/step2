@@ -79,6 +79,14 @@ namespace Trokam
                                     const int &seqIndex,
                                     const int &occurrence);
 
+            void insertSeqOccInPage(const int &pageIndex,
+                                    const std::string &sequence,
+                                    const int &occurrence);
+
+            std::string generateSentenceOccInPage(const int &pageIndex,
+                                                  const std::string &sequence,
+                                                  const int &occurrence);
+
             void setCrunched(const int &pageIndex);
 
             void savePageContent(const int &pageIndex,

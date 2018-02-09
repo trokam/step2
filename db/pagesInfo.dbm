@@ -3,7 +3,7 @@
 CAUTION: Do not modify this file unless you know what you are doing.
          Unexpected results may occur if the code is changed deliberately.
 -->
-<dbmodel pgmodeler-ver="0.8.1" last-position="0,0" last-zoom="1"
+<dbmodel pgmodeler-ver="0.8.1" last-position="1,1" last-zoom="1"
 	 default-schema="public" default-owner="postgres">
 <database name="new_database">
 </database>
@@ -32,7 +32,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 <table name="page">
 	<schema name="public"/>
 	<role name="postgres"/>
-	<position x="574" y="371"/>
+	<position x="556" y="66"/>
 	<column name="index" not-null="true">
 		<type name="serial"/>
 	</column>
@@ -69,6 +69,9 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	<column name="count" not-null="true">
 		<type name="integer"/>
 	</column>
+	<column name="relevance" not-null="true">
+		<type name="float"/>
+	</column>
 
 	<customidxs object-type="column">
 		<object name="index_page" index="0"/>
@@ -88,7 +91,12 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	 custom-color="#baa82a"
 	 src-table="public.page"
 	 dst-table="public.page_seq"
-	 src-required="false" dst-required="false"/>
+	 src-required="false" dst-required="false">
+	<line>
+		<position x="532.225" y="93.1"/>
+	<position x="532.225" y="264.1"/>
+	</line>
+</relationship>
 
 <relationship name="text_has_many_page_text" type="rel1n"
 	 src-col-pattern="{sc}_{st}"
@@ -98,6 +106,10 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	 src-table="public.sequence"
 	 dst-table="public.page_seq"
 	 src-required="false" dst-required="false">
+	<line>
+		<position x="268.6" y="99.1"/>
+	<position x="268.6" y="277.1"/>
+	</line>
 	<label ref-type="src-label">
 		<position x="6.13187" y="2.8"/>
 	</label>
@@ -107,30 +119,57 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	<columns names="index_page,index_sequence" ref-type="src-columns"/>
 </constraint>
 
-<table name="global_occ">
+<view name="total_occ">
 	<schema name="public"/>
 	<role name="postgres"/>
-	<position x="426" y="54"/>
-	<column name="count">
+	<position x="84" y="247"/>
+	<reference table="public.sequence" column="index"/>
+	<reference table="public.page_seq" column="count"/>
+	<expression type="select-exp">0,1</expression>
+	<expression type="cte-exp"><![CDATA[SELECT sequence.index, SUM(page_seq.count) FROM page_seq, sequence WHERE page_seq.index_sequence=sequence.index GROUP BY sequence.index;]]></expression>
+</view>
+
+<relationship name="rel_global_sequence" type="reltv"
+	 src-table="public.global"
+	 dst-table="public.sequence"
+	 src-required="false" dst-required="false"/>
+
+<relationship name="rel_global_page_seq" type="reltv"
+	 src-table="public.total_occ"
+	 dst-table="public.page_seq"
+	 src-required="false" dst-required="false"/>
+
+<table name="trait">
+	<schema name="public"/>
+	<role name="postgres"/>
+	<position x="288" y="333"/>
+	<column name="title" not-null="true">
+		<type name="varchar" length="1000"/>
+	</column>
+	<column name="content_size" not-null="true">
 		<type name="integer"/>
+	</column>
+	<column name="complexity" not-null="true">
+		<type name="float"/>
 	</column>
 
 	<customidxs object-type="column">
-		<object name="index_sequence" index="1"/>
+		<object name="index_page" index="0"/>
 	</customidxs>
 
 	<customidxs object-type="constraint">
-		<object name="sequence_fk" index="0"/>
+		<object name="page_fk" index="0"/>
+		<object name="trait_uq" index="1"/>
 	</customidxs>
 </table>
 
-<relationship name="text_has_many_global_occ" type="rel1n"
+<relationship name="trait_has_one_page" type="rel11"
 	 src-col-pattern="{sc}_{st}"
 	 pk-pattern="{dt}_pk" uq-pattern="{dt}_uq"
 	 src-fk-pattern="{st}_fk"
-	 custom-color="#2959d3"
-	 src-table="public.sequence"
-	 dst-table="public.global_occ"
+	 custom-color="#aa0000"
+	 src-table="public.page"
+	 dst-table="public.trait"
 	 src-required="false" dst-required="false"/>
 
 </dbmodel>
