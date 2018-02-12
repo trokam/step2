@@ -66,11 +66,16 @@ namespace Trokam
              * Delete a directory.
              **/
             static void rmDir(const std::string &dirname);
-            
+
             /**
              * Creates a directory.
              **/
             static void mkDir(const std::string &dirname);
+
+            /**
+             * Get the file type.
+             **/
+            static std::string type(const std::string &file);
     };
 }
 

@@ -3,7 +3,7 @@
 CAUTION: Do not modify this file unless you know what you are doing.
          Unexpected results may occur if the code is changed deliberately.
 -->
-<dbmodel pgmodeler-ver="0.8.1" last-position="1,1" last-zoom="1"
+<dbmodel pgmodeler-ver="0.8.1" last-position="0,0" last-zoom="1"
 	 default-schema="public" default-owner="postgres">
 <database name="new_database">
 </database>
@@ -53,6 +53,12 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	</column>
 	<column name="crunched" not-null="true">
 		<type name="date"/>
+	</column>
+	<column name="state" not-null="true">
+		<type name="smallint"/>
+	</column>
+	<column name="type" not-null="true">
+		<type name="varchar" length="200"/>
 	</column>
 	<constraint name="page_pkey" type="pk-constr" table="public.page">
 		<columns names="index" ref-type="src-columns"/>
@@ -118,26 +124,6 @@ CAUTION: Do not modify this file unless you know what you are doing.
 <constraint name="unique_page_text" type="uq-constr" table="public.page_seq">
 	<columns names="index_page,index_sequence" ref-type="src-columns"/>
 </constraint>
-
-<view name="total_occ">
-	<schema name="public"/>
-	<role name="postgres"/>
-	<position x="84" y="247"/>
-	<reference table="public.sequence" column="index"/>
-	<reference table="public.page_seq" column="count"/>
-	<expression type="select-exp">0,1</expression>
-	<expression type="cte-exp"><![CDATA[SELECT sequence.index, SUM(page_seq.count) FROM page_seq, sequence WHERE page_seq.index_sequence=sequence.index GROUP BY sequence.index;]]></expression>
-</view>
-
-<relationship name="rel_global_sequence" type="reltv"
-	 src-table="public.global"
-	 dst-table="public.sequence"
-	 src-required="false" dst-required="false"/>
-
-<relationship name="rel_global_page_seq" type="reltv"
-	 src-table="public.total_occ"
-	 dst-table="public.page_seq"
-	 src-required="false" dst-required="false"/>
 
 <table name="trait">
 	<schema name="public"/>

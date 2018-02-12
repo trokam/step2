@@ -51,8 +51,7 @@ namespace Trokam
 
             void execSql(const std::string &sentence);
             void execSql(const std::string &sentence, boost::scoped_ptr<pqxx::result> &answer);
-            //void execSevSql(const std::vector<std::string> &bundle);
-            void execSevSql(std::vector<std::string> &bundle);
+            void execSql(std::vector<std::string> &bundle);
 
             static void extract(const boost::scoped_ptr<pqxx::result> &answer, int &value);
 

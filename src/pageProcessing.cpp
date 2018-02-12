@@ -21,34 +21,34 @@
  * along with Trokam. If not, see <http://www.gnu.org/licenses/>.
  **********************************************************************/
 
-#ifndef TROKAM_WEB_H
-#define TROKAM_WEB_H
-
 /// C++
-#include <string>
+#include <iostream>
 
 /// Trokam
-#include "options.h"
+#include "common.h"
 #include "pageProcessing.h"
+#include "reporting.h"
+#include "textProcessing.h"
+#include "textStore.h"
 
-/**
- * \brief
- *
- **/
-namespace Trokam
+void Trokam::PageProcessing::extractPageInfo(Trokam::PageInfo &info)
 {
-    class Web
-    {
-        public:
-
-            Web(const Trokam::Options &value);
-
-            void fetch(const std::string &url,
-                             Trokam::PageInfo &info);
-
-        private:
-
-            Trokam::Options settings;
-    };
+    Trokam::TextProcessing::extractTitle(info.raw, info.title);
+    Trokam::TextProcessing::extractSequences(info.content, info.sequences);
+    computeComplexity(info);
 }
-#endif  /// TROKAM_WEB_H
+
+
+void Trokam::PageProcessing::computeComplexity(Trokam::PageInfo &info)
+{
+    info.size= info.content.length();
+
+    if(info.size != 0)
+    {
+        info.complexity= float(info.sequences.size())/float(info.size);
+    }
+    else
+    {
+        info.complexity= 0;
+    }
+}

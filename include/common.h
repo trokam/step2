@@ -37,5 +37,32 @@ const std::string CONFIG_FILE= "/usr/local/etc/trokam.cfg";
 const std::string HTTP= "http://";
 const std::string HTTPS= "https://";
 const std::string SLASH= "/";
+const std::string OUT_OF_TIME= "2000-01-01";
+const std::string EMPTY= "";
+const std::string HTML= "text/html";
+
+/**
+ * Errors.
+ **/
+
+const std::string ERROR_NO_PAGES_TO_PROCESS=     "error: there are no pages to process.";
+const std::string ERROR_DOWNLOAD_FAIL=           "error: download fail";
+const std::string ERROR_TYPE_NOT_SUPPORTED=      "error: file type not supported.";
+const std::string ERROR_EXTRACTING_CONTENT_FAIL= "error: extracting content fail";
+const std::string ERROR_EXTRACTING_LINKS_FAIL=   "error: extracting links fail";
+
+
+/**
+ * State of page processing.
+ **/
+
+const int UNKNOWN =                 -1;
+const int SUCCESS =                  0;
+const int NO_PAGES_TO_PROCESS =      1;
+const int DOWNLOAD_FAIL =            2;
+const int TYPE_NOT_SUPPORTED =       3;
+const int EXTRACTING_CONTENT_FAIL =  4;
+const int EXTRACTING_LINKS_FAIL =    5;
+
 
 #endif /// TROKAM_COMMON_H

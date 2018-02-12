@@ -214,11 +214,12 @@ void Trokam::Options::createWorkingDirectory()
 {
     int pid= getpid();
     optWorkingDir= "/tmp/trokam/cruncher_" + std::to_string(pid);
+    std::cout << "creating: '" << optWorkingDir << "'\n";
     Trokam::FileOps::mkDir(optWorkingDir);
 }
 
 void Trokam::Options::deleteWorkingDirectory()
 {
-    std::cout << "deleting: '" << optWorkingDir << "'\n";
+    std::cout << "\ndeleting: '" << optWorkingDir << "'\n";
     Trokam::FileOps::rmDir(optWorkingDir);
 }

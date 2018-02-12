@@ -86,7 +86,7 @@ int Trokam::TextStore::size() const
     return textCollection.size();
 }
 
-Trokam::TextOcc Trokam::TextStore::get(const int &id)
+Trokam::TextOcc Trokam::TextStore::get(const int &id) const
 {
     return textCollection[id];
 }
@@ -100,4 +100,16 @@ void Trokam::TextStore::sort()
                     return (a.occurrence > b.occurrence);
                 }
              );
+}
+
+void Trokam::TextStore::setRelevance(const int &total)
+{
+    float length= float(total);
+
+    std::cout << "length: " << length << "\n";
+
+    for(std::vector<Trokam::TextOcc>::iterator it= textCollection.begin(); it!=textCollection.end(); ++it)
+    {
+        it->relevance= float(it->occurrence)/length;
+    }
 }

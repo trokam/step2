@@ -23,8 +23,10 @@
 
 /// C++
 #include <iostream>
+#include <exception>
 
 /// Trokam
+#include "common.h"
 #include "fileOps.h"
 #include "options.h"
 #include "web.h"
@@ -33,45 +35,72 @@ Trokam::Web::Web(const Trokam::Options &value): settings(value)
 {}
 
 void Trokam::Web::fetch(const std::string &url,
-                              std::string &content,
-                              std::string &links)
+                              Trokam::PageInfo &info)
 {
     std::string command;
     int status;
 
     /**
-     * Getting the content of web page in plain text format.
+     * Setting up the files.
      **/
-    std::cout << "getting the plain text ..." << std::endl;
-
-    std::string downloadPlain= settings.workingDir() + "/plain.txt";
-    Trokam::FileOps::rmFile(downloadPlain);
-    command= "lynx -dump -force_html -nolist " + url + " >  " + downloadPlain;
-    status= system(command.c_str());
-    if(status==0)
-    {
-        Trokam::FileOps::read(downloadPlain, content);
-    }
-    else
-    {
-        std::cerr << "download fail" << std::endl;
-    }
+    const std::string rawFile= settings.workingDir() + "/raw";
+    const std::string contentFile= settings.workingDir() + "/content";
+    const std::string linksFile= settings.workingDir() + "/links";
 
     /**
-     * Gatting the links in the web page.
+     * Deleting them if they exists.
      **/
-    std::cout << "getting the links ..." << std::endl;
-    std::string downloadLinks= settings.workingDir() + "/links.txt";
-    Trokam::FileOps::rmFile(downloadLinks);
-    command= "lynx -dump -force_html -listonly -nonumbers " + url + " > " + downloadLinks;
+    Trokam::FileOps::rmFile(rawFile);
+    Trokam::FileOps::rmFile(contentFile);
+    Trokam::FileOps::rmFile(linksFile);
 
+    /**
+     * Download the web page and put it in a file.
+     **/
+    command= "wget -q --timeout=60 -O " + rawFile + " -k \"" + url + "\"";
     status= system(command.c_str());
-    if(status==0)
+    if(status!=0)
     {
-        Trokam::FileOps::read(downloadLinks, links);
+        throw DOWNLOAD_FAIL;
+    }
+
+    std::string type= Trokam::FileOps::type(rawFile);
+    info.type= type.substr(0,9);
+
+    if(info.type == HTML)
+    {
+        Trokam::FileOps::read(rawFile, info.raw);
+
+        /**
+         * Extract the user-readable content.
+         **/
+        command= "lynx -dump -force_html -nolist " + rawFile + " >  " + contentFile;
+        status= system(command.c_str());
+        if(status==0)
+        {
+            Trokam::FileOps::read(contentFile, info.content);
+        }
+        else
+        {
+            throw EXTRACTING_CONTENT_FAIL;
+        }
+
+        /**
+         * Extract the links.
+         **/
+        command= "lynx -dump -force_html -listonly -nonumbers " + rawFile + " > " + linksFile;
+        status= system(command.c_str());
+        if(status==0)
+        {
+            Trokam::FileOps::read(linksFile, info.links);
+        }
+        else
+        {
+            throw EXTRACTING_LINKS_FAIL;
+        }
     }
     else
     {
-        std::cerr << "download fail" << std::endl;
+        throw TYPE_NOT_SUPPORTED;
     }
 }

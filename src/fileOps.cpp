@@ -26,6 +26,9 @@
 #include <fstream>
 #include <string>
 
+/// Magic
+#include <magic.h>
+
 /// Trokam
 #include "fileOps.h"
 
@@ -86,7 +89,6 @@ void Trokam::FileOps::rmFile(const std::string &filename)
 void Trokam::FileOps::rmDir(const std::string &dirname)
 {
     std::string command= "rm -rf " +  dirname;
-    // system(command.c_str());
     const int status= system(command.c_str());
     if(status != 0)
     {
@@ -97,10 +99,19 @@ void Trokam::FileOps::rmDir(const std::string &dirname)
 void Trokam::FileOps::mkDir(const std::string &dirname)
 {
     std::string command= "mkdir -p " +  dirname;
-    // system(command.c_str());
     const int status= system(command.c_str());
     if(status != 0)
     {
         std::cerr << "failure on creating directory: " << dirname << "\n";
     }
+}
+
+std::string Trokam::FileOps::type(const std::string &file)
+{
+    magic_t mg= magic_open(MAGIC_CONTINUE|MAGIC_ERROR|MAGIC_MIME);
+    magic_load(mg, NULL);
+    std::string type(magic_file(mg, file.c_str()));
+    magic_close(mg);
+
+    return type;
 }

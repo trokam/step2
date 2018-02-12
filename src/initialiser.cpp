@@ -62,15 +62,10 @@ void Trokam::Initialiser::fill()
         /**
          ** Inserting a page, it is just the URL without content.
          **/
-        try
+        if(info.insertPage(line, 0))
         {
-            info.insertPage(line, 0);
             std::cout << "inserted URL '" <<  line << "'\n";
             count++;
-        }
-        catch(const std::exception& e)
-        {
-
         }
     }
 }

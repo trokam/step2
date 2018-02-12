@@ -32,18 +32,18 @@
 #include "common.h"
 #include "fileOps.h"
 #include "infoStore.h"
+#include "reporting.h"
+#include "pageProcessing.h"
 #include "textProcessing.h"
 #include "textStore.h"
 
-Trokam::InfoStore::InfoStore(const Trokam::Options &value): settings(value), db(value)
+Trokam::InfoStore::InfoStore(const Trokam::Options &value): settings(value), db(value), msg(value)
 {}
 
 void Trokam::InfoStore::getUrlForProcessing(int &index,
                                             std::string &url,
                                             int &level)
 {
-    std::cout << "get for processing ...\n";
-
     std::string selectSentence;
     selectSentence=  "SELECT index ";
     selectSentence+= "FROM page ";
@@ -72,13 +72,11 @@ void Trokam::InfoStore::getUrlForProcessing(int &index,
     }
     else
     {
-        index= -1;
-        url= "";
-        level= -1;
+        throw NO_PAGES_TO_PROCESS;
     }
 }
 
-void Trokam::InfoStore::insertPage(const std::string &url,
+bool Trokam::InfoStore::insertPage(const std::string &url,
                                    const int &level)
 {
     try
@@ -97,9 +95,15 @@ void Trokam::InfoStore::insertPage(const std::string &url,
                 sentence+= "'" + path + "', ";
                 sentence+= std::to_string(level) + ", ";
                 sentence+= "false, ";
-                sentence+= "'2000-01-01'";
+                sentence+= "'" + OUT_OF_TIME + "', ";
+                sentence+=  std::to_string(UNKNOWN) + ", ";
+                sentence+= "'" + EMPTY + "' ";
                 sentence+= ") ";
                 db.execSql(sentence);
+            }
+            else
+            {
+                return false;
             }
         }
     }
@@ -109,23 +113,25 @@ void Trokam::InfoStore::insertPage(const std::string &url,
          * If the URL already exists, then a 'duplicate key' error
          * is thrown and is catched here. Nothing else to do.
          **/
+        msg.showSqlError(e);
+        return false;
     }
+    return true;
 }
 
 void Trokam::InfoStore::insertPage(const int &index,
-                                   const boost::scoped_ptr<Trokam::TextStore> &seqBag,
-                                   const std::string &links,
-                                   const std::string &content,
-                                   const int &level)
+                                   const int &level,
+                                   const Trokam::PageInfo &info)
 {
-    insertSevSequences(index, seqBag);
-    insertUrls(links, level+1);
-    savePageContent(index, content);
-    setCrunched(index);
+    insertSequences(index, info.sequences);
+    insertTraits(index, info);
+    insertUrls(info.links, level+1);
+    savePageContent(index, info.content);
+    setCrunched(index, info);
 }
 
-void Trokam::InfoStore::insertSevSequences(const int &pageIndex,
-                                           const boost::scoped_ptr<Trokam::TextStore> &bag)
+void Trokam::InfoStore::insertSequences(const int &pageIndex,
+                                        const Trokam::TextStore &bag)
 {
     std::cout << "inserting sequences and their occurrences ...\n";
 
@@ -134,18 +140,43 @@ void Trokam::InfoStore::insertSevSequences(const int &pageIndex,
         deleteSeqOccOfPage(pageIndex);
 
         std::vector<std::string> bundle;
-        for(int i=0; i<bag->size(); i++)
+        for(int i=0; i<bag.size(); i++)
         {
-            const TextOcc to= bag->get(i);
-            const std::string sentence= generateSentenceOccInPage(pageIndex, to.text, to.occurrence);
+            const TextOcc to= bag.get(i);
+            const std::string sentence= generateSentenceOccInPage(pageIndex, to);
             bundle.push_back(sentence);
         }
-        db.execSevSql(bundle);
+        db.execSql(bundle);
     }
     catch(const pqxx::sql_error &e)
     {
-        std::cerr << "SQL error: " << e.what() << "\n";
-        std::cerr << "Query was: " << e.query() << std::endl;
+        msg.showSqlError(e);
+    }
+}
+
+void Trokam::InfoStore::insertTraits(const int &index,
+                                     const Trokam::PageInfo &info)
+{
+    std::cout << "inserting page traits ...\n";
+
+    try
+    {
+        std::string sentence;
+        sentence=  "DELETE FROM trait ";
+        sentence+= "WHERE index_page=" + std::to_string(index);
+        db.execSql(sentence);
+
+        sentence=  "INSERT INTO trait ";
+        sentence+= "VALUES (";
+        sentence+= std::to_string(index) + ", ";
+        sentence+= "'" + info.title + "', ";
+        sentence+= std::to_string(info.content.length()) + ", ";
+        sentence+= std::to_string(info.complexity) + ") ";
+        db.execSql(sentence);
+    }
+    catch(const pqxx::sql_error &e)
+    {
+        msg.showSqlError(e);
     }
 }
 
@@ -187,13 +218,32 @@ void Trokam::InfoStore::savePageContent(const int &index, const std::string &val
     Trokam::FileOps::save(file, value);
 }
 
-void Trokam::InfoStore::setCrunched(const int &index)
+void Trokam::InfoStore::setCrunched(const int &index,
+                                    const Trokam::PageInfo &info)
 {
     std::cout << "setting crunched ...\n";
 
     std::string sentence;
     sentence=  "UPDATE page ";
-    sentence+= "SET processing=false, crunched=(SELECT current_date) ";
+    sentence+= "SET processing=false, ";
+    sentence+= "crunched=(SELECT current_date), ";
+    sentence+= "state=" + std::to_string(SUCCESS) + ", ";
+    sentence+= "type='" + info.type + "' ";
+    sentence+= "WHERE index=(" + std::to_string(index) + ") ";
+    db.execSql(sentence);
+}
+
+void Trokam::InfoStore::setPageState(const int &index,
+                                     const int &error)
+{
+    std::cout << "setting page state ...\n";
+
+    std::string sentence;
+    sentence=  "UPDATE page ";
+    sentence+= "SET processing=false, ";
+    sentence+= "crunched=(SELECT current_date), ";
+    sentence+= "state=" + std::to_string(error) + ", ";
+    sentence+= "type='' ";
     sentence+= "WHERE index=(" + std::to_string(index) + ") ";
     db.execSql(sentence);
 }
@@ -219,117 +269,17 @@ void Trokam::InfoStore::deleteSeqOccOfPage(const int &pageIndex)
     db.execSql(sentence);
 }
 
-int Trokam::InfoStore::insertOneSequence(const std::string &value)
-{
-    int index= -1;
-
-    try
-    {
-        std::string sentence;
-        sentence=  "INSERT INTO sequence ";
-        sentence+= "VALUES (";
-        sentence+= "DEFAULT, ";
-        sentence+= "'" + value + "' ";
-        sentence+= ") ";
-        sentence+= "RETURNING index ";
-
-        boost::scoped_ptr<pqxx::result> answer;
-        db.execSql(sentence, answer);
-        Trokam::Postgresql::extract(answer, index);
-    }
-    catch(const pqxx::sql_error &e)
-    {
-        /**
-         * If the sequence already exists, then a 'duplicate key' error
-         * is thrown and is catched here.
-         **/
-        std::string sentence;
-        sentence=  "SELECT index ";
-        sentence+= "FROM sequence ";
-        sentence+= "WHERE value='" + value + "' ";
-
-        boost::scoped_ptr<pqxx::result> answer;
-        db.execSql(sentence, answer);
-        Trokam::Postgresql::extract(answer, index);
-    }
-
-    return index;
-}
-
-void Trokam::InfoStore::insertSeqOccInPage(const int &pageIndex,
-                                           const int &seqIndex,
-                                           const int &occurrence)
-{
-    try
-    {
-        std::string sentence;
-        sentence=  "INSERT INTO page_seq ";
-        sentence+= "VALUES (";
-        sentence+= std::to_string(pageIndex) + ", ";
-        sentence+= std::to_string(seqIndex) + ", ";
-        sentence+= std::to_string(occurrence) + ") ";
-        db.execSql(sentence);
-    }
-    catch(const pqxx::sql_error &e)
-    {
-        /**
-         * If the pair (pageIndex, seqIndex) already exists,
-         * then a 'duplicate key' error is thrown and is
-         * catched here. There is something wrong!
-         **/
-        std::cerr << "SQL error: " << e.what() << "\n";
-        std::cerr << "Query was: " << e.query() << std::endl;
-    }
-}
-
-void Trokam::InfoStore::insertSeqOccInPage(const int &pageIndex,
-                                           const std::string &sequence,
-                                           const int &occurrence)
-{
-    try
-    {
-        std::string sentence;
-        sentence=  "WITH s AS ( ";
-        sentence+= "SELECT index ";
-        sentence+= "FROM sequence ";
-        sentence+= "WHERE value = '" + sequence + "' ";
-        sentence+= "), i as ( ";
-        sentence+= "INSERT INTO sequence(\"value\") ";
-        sentence+= "SELECT '" + sequence + "' ";
-        sentence+= "WHERE NOT EXISTS (SELECT 1 FROM s) ";
-        sentence+= "RETURNING index ";
-        sentence+= "), ";
-        sentence+= "m AS (SELECT index FROM i UNION ALL ";
-        sentence+= "SELECT index FROM s) ";
-        sentence+= "INSERT INTO page_seq VALUES (" + std::to_string(pageIndex) + ", ";
-        sentence+= "(SELECT index FROM m), ";
-        sentence+= std::to_string(occurrence) + ") ";
-        db.execSql(sentence);
-    }
-    catch(const pqxx::sql_error &e)
-    {
-        /**
-         * If the pair (pageIndex, seqIndex) already exists,
-         * then a 'duplicate key' error is thrown and is
-         * catched here. There is something wrong!
-         **/
-        std::cerr << "SQL error: " << e.what() << "\n";
-        std::cerr << "Query was: " << e.query() << std::endl;
-    }
-}
-
 std::string Trokam::InfoStore::generateSentenceOccInPage(const int &pageIndex,
-                                                         const std::string &sequence,
-                                                         const int &occurrence)
+                                                         const Trokam::TextOcc &to)
 {
     std::string sentence;
     sentence=  "WITH s AS ( ";
     sentence+= "SELECT index ";
     sentence+= "FROM sequence ";
-    sentence+= "WHERE value = '" + sequence + "' ";
+    sentence+= "WHERE value = '" + to.text + "' ";
     sentence+= "), i as ( ";
     sentence+= "INSERT INTO sequence(\"value\") ";
-    sentence+= "SELECT '" + sequence + "' ";
+    sentence+= "SELECT '" + to.text + "' ";
     sentence+= "WHERE NOT EXISTS (SELECT 1 FROM s) ";
     sentence+= "RETURNING index ";
     sentence+= "), ";
@@ -337,6 +287,7 @@ std::string Trokam::InfoStore::generateSentenceOccInPage(const int &pageIndex,
     sentence+= "SELECT index FROM s) ";
     sentence+= "INSERT INTO page_seq VALUES (" + std::to_string(pageIndex) + ", ";
     sentence+= "(SELECT index FROM m), ";
-    sentence+= std::to_string(occurrence) + ") ";
+    sentence+= std::to_string(to.occurrence) + ", ";
+    sentence+= std::to_string(to.relevance) + ") ";
     return sentence;
 }

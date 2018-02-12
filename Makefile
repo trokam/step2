@@ -29,7 +29,8 @@ LDFLAGS=-g
 
 LDLIBS= -lboost_system \
         -lboost_program_options \
-        -lpqxx
+        -lpqxx \
+        -lmagic
 
 BIN=./bin
 
@@ -42,7 +43,9 @@ SOURCES_CRUNCHER= src/mainCruncher.cpp \
                   src/fileOps.cpp \
                   src/infoStore.cpp \
                   src/options.cpp \
+                  src/pageProcessing.cpp \
                   src/postgresql.cpp \
+                  src/reporting.cpp \
                   src/textProcessing.cpp \
                   src/textStore.cpp \
                   src/web.cpp
@@ -54,7 +57,9 @@ SOURCES_INITIALISER= src/mainInitialiser.cpp \
                      src/infoStore.cpp \
                      src/initialiser.cpp \
                      src/options.cpp \
+                     src/pageProcessing.cpp \
                      src/postgresql.cpp \
+					 src/reporting.cpp \
                      src/textProcessing.cpp \
                      src/textStore.cpp
 

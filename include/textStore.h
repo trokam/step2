@@ -38,6 +38,7 @@ namespace Trokam
     {
         std::string text;
         int occurrence;
+        float relevance;
     };
 
     class TextStore
@@ -53,9 +54,11 @@ namespace Trokam
              **/
             void show(const int &value= 10);
 
+            void setRelevance(const int &total);
+
             int size() const;
 
-            TextOcc get(const int &id);
+            TextOcc get(const int &id) const;
 
         private:
 

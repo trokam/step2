@@ -28,9 +28,6 @@
 /// Trokam
 #include "postgresql.h"
 
-/**
- *
- **/
 Trokam::Postgresql::Postgresql(const Trokam::Options &value)
 {
     std::string connParameters;
@@ -55,7 +52,7 @@ Trokam::Postgresql::Postgresql(const Trokam::Options &value)
         connParameters+= "password=" + value.dbPass() + " ";
     }
 
-    std::cout << "connectin parameters: " << connParameters << "\n";
+    std::cout << "connecting parameters: " << connParameters << "\n";
 
     dbConnection= new pqxx::connection(connParameters);
 
@@ -64,17 +61,11 @@ Trokam::Postgresql::Postgresql(const Trokam::Options &value)
     std::cout << "protocol version: " << dbConnection->protocol_version() << std::endl;
 }
 
-/**
- *
- **/
 Trokam::Postgresql::~Postgresql()
 {
     delete dbConnection;
 }
 
-/**
- *
- **/
 void Trokam::Postgresql::execSql(const std::string &sentence)
 {
     try
@@ -98,12 +89,6 @@ void Trokam::Postgresql::execSql(const std::string &sentence)
     }
     catch(const pqxx::sql_error &e)
     {
-        /**
-         * The sql_error exception class gives us
-         * some extra information.
-         **/
-        // std::cerr << "SQL error: " << e.what() << "\n";
-        // std::cerr << "Query was: " << e.query() << std::endl;
         throw(e);
     }
     catch(const std::exception &e)
@@ -123,10 +108,6 @@ void Trokam::Postgresql::execSql(const std::string &sentence)
     }
 }
 
-
-/**
- *
- **/
 void Trokam::Postgresql::execSql(const std::string &sentence,
                                  boost::scoped_ptr<pqxx::result> &answer)
 {
@@ -151,12 +132,6 @@ void Trokam::Postgresql::execSql(const std::string &sentence,
     }
     catch(const pqxx::sql_error &e)
     {
-        /**
-         * The sql_error exception class gives us
-         * some extra information.
-         **/
-        // std::cerr << "SQL error: " << e.what() << "\n";
-        // std::cerr << "Query was: " << e.query() << std::endl;
         throw e;
     }
     catch(const std::exception &e)
@@ -176,11 +151,7 @@ void Trokam::Postgresql::execSql(const std::string &sentence,
     }
 }
 
-/**
- *
- **/
-// void Trokam::Postgresql::execSevSql(const std::vector<std::string> &bundle)
-void Trokam::Postgresql::execSevSql(std::vector<std::string> &bundle)
+void Trokam::Postgresql::execSql(std::vector<std::string> &bundle)
 {
     try
     {
@@ -189,28 +160,16 @@ void Trokam::Postgresql::execSevSql(std::vector<std::string> &bundle)
          **/
         pqxx::work T(*dbConnection, "execute_several_no_answer");
 
-        /**
-         *
-         **/
         for(std::vector<std::string>::iterator it= bundle.begin(); it!=bundle.end(); ++it)
         {
             const std::string sentence= *it;
             T.exec(sentence);
         }
 
-        /**
-         *
-         **/
         T.commit();
     }
     catch(const pqxx::sql_error &e)
     {
-        /**
-         * The sql_error exception class gives us
-         * some extra information.
-         **/
-        std::cerr << "SQL error: " << e.what() << "\n";
-        std::cerr << "Query was: " << e.query() << std::endl;
         throw(e);
     }
     catch(const std::exception &e)

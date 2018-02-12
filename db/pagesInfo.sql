@@ -37,6 +37,8 @@ CREATE TABLE public.page(
 	level integer NOT NULL,
 	processing bool NOT NULL,
 	crunched date NOT NULL,
+	state smallint NOT NULL,
+	type varchar(200) NOT NULL,
 	CONSTRAINT page_pkey PRIMARY KEY (index),
 	CONSTRAINT page_unique UNIQUE (protocol,domain,path)
 
@@ -50,7 +52,8 @@ ALTER TABLE public.page OWNER TO postgres;
 CREATE TABLE public.page_seq(
 	index_page integer,
 	index_sequence integer,
-	count integer NOT NULL
+	count integer NOT NULL,
+	relevance float NOT NULL
 );
 -- ddl-end --
 ALTER TABLE public.page_seq OWNER TO postgres;
@@ -75,21 +78,28 @@ ON DELETE SET NULL ON UPDATE CASCADE;
 ALTER TABLE public.page_seq ADD CONSTRAINT unique_page_text UNIQUE (index_page,index_sequence);
 -- ddl-end --
 
--- object: public.global_occ | type: TABLE --
--- DROP TABLE IF EXISTS public.global_occ CASCADE;
-CREATE TABLE public.global_occ(
-	count integer,
-	index_sequence integer
+-- object: public.trait | type: TABLE --
+-- DROP TABLE IF EXISTS public.trait CASCADE;
+CREATE TABLE public.trait(
+	index_page integer,
+	title varchar(1000) NOT NULL,
+	content_size integer NOT NULL,
+	complexity float NOT NULL
 );
 -- ddl-end --
-ALTER TABLE public.global_occ OWNER TO postgres;
+ALTER TABLE public.trait OWNER TO postgres;
 -- ddl-end --
 
--- object: sequence_fk | type: CONSTRAINT --
--- ALTER TABLE public.global_occ DROP CONSTRAINT IF EXISTS sequence_fk CASCADE;
-ALTER TABLE public.global_occ ADD CONSTRAINT sequence_fk FOREIGN KEY (index_sequence)
-REFERENCES public.sequence (index) MATCH FULL
+-- object: page_fk | type: CONSTRAINT --
+-- ALTER TABLE public.trait DROP CONSTRAINT IF EXISTS page_fk CASCADE;
+ALTER TABLE public.trait ADD CONSTRAINT page_fk FOREIGN KEY (index_page)
+REFERENCES public.page (index) MATCH FULL
 ON DELETE SET NULL ON UPDATE CASCADE;
+-- ddl-end --
+
+-- object: trait_uq | type: CONSTRAINT --
+-- ALTER TABLE public.trait DROP CONSTRAINT IF EXISTS trait_uq CASCADE;
+ALTER TABLE public.trait ADD CONSTRAINT trait_uq UNIQUE (index_page);
 -- ddl-end --
 
 

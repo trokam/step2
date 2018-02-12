@@ -29,69 +29,91 @@
 
 /// Trokam
 #include "cruncher.h"
-#include "infoStore.h"
-#include "textProcessing.h"
+#include "common.h"
+#include "pageProcessing.h"
 #include "textStore.h"
 #include "web.h"
 
-Trokam::Cruncher::Cruncher(const Trokam::Options &value): settings(value)
-{}
+Trokam::Cruncher::Cruncher(const Trokam::Options &value): settings(value),
+                                                          storage(settings),
+                                                          msg(settings)
+{
+    index= -1;
+}
 
 void Trokam::Cruncher::run()
 {
-    Trokam::InfoStore pi(settings);
     int pages= 0;
 
     while(pages < settings.pagesLimit())
     {
-        std::string content, links;
-
-        /**
-         * Get an URL from the database.
-         **/
-        int index, level;
-        std::string url;
-        pi.getUrlForProcessing(index, url, level);
-
-        std::cout << "\nprocessing index: " << index
-                               << " url: '" << url
-                               << "' level: " << level
-                               << "'" << std::endl;
-
-        if((index != -1) || (url != ""))
+        try
         {
+            /**
+             * Page counter is incremented at the begining because
+             * the attempt to process a page is taken into the count.
+             **/
+            pages++;
+
+            /**
+             * Clean variables for every processing page.
+             **/
+            std::string url;
+            int level;
+            Trokam::PageInfo info;
+            info.size= 0;
+            info.complexity= 0.0;
+
+            /**
+             * Get an URL from the database and report.
+             **/
+            storage.getUrlForProcessing(index, url, level);
+            msg.processingNow(pages, index, url, level);
+
             /**
              * Fetch the URL content.
              **/
             Trokam::Web w(settings);
-            w.fetch(url, content, links);
+            w.fetch(url, info);
 
             /**
-             * Creates an empty bag to keep the sequences.
-             * Then, extract text sequences from content and their
-             * number of occurrences from page content
-             * and put into the bag.
+             * Extract page information.
              **/
-            boost::scoped_ptr<Trokam::TextStore> seqBag(new Trokam::TextStore);
-            Trokam::TextProcessing::extractSequences(content, seqBag);
+            Trokam::PageProcessing::extractPageInfo(info);
 
             /**
-             * Show the most frequent sequences in the file.
+             * Report on the page just processed and
+             * insert its information in the store.
              **/
-            std::cout << "content length: " << content.length() << "\n";
-            std::cout << "extracted: " << seqBag->size() << " sequences\n";
-            std::cout << "complexity: " << float(seqBag->size())/float(content.length()) << "\n";
-
-            /**
-             * Insert the page's sequences, urls and content in the infoStore.
-             **/
-            pi.insertPage(index, seqBag, links, content, level);
-
-            pages++;
+            msg.processingOutcome(info);
+            storage.insertPage(index, level, info);
         }
-        else
+        catch(const int &e)
         {
-            exit(1);
+            msg.showGeneralError(e);
+            action(index, e);
         }
+    }
+}
+
+void Trokam::Cruncher::action(const int &index,
+                              const int &error)
+{
+    if(error == NO_PAGES_TO_PROCESS)
+    {
+        /**
+         * If there are not URLs to process then
+         * there is nothing to do. Probably, the
+         * database must be initilised.
+         **/
+        exit(1);
+    }
+    else
+    {
+        /**
+         * Saving the error code in the database
+         * to know what happened processing this page.
+         **/
+        storage.setPageState(index, error);
     }
 }

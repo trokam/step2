@@ -31,6 +31,9 @@
 #include <boost/scoped_ptr.hpp>
 
 /// Trokam
+#include "reporting.h"
+#include "textProcessing.h"
+#include "pageProcessing.h"
 #include "textStore.h"
 #include "options.h"
 #include "postgresql.h"
@@ -51,43 +54,38 @@ namespace Trokam
                                      std::string &url,
                                      int &level);
 
-            void insertPage(const std::string &url,
+            bool insertPage(const std::string &url,
                             const int &level);
 
             void insertPage(const int &index,
-                            const boost::scoped_ptr<Trokam::TextStore> &seqBag,
-                            const std::string &links,
-                            const std::string &content,
-                            const int &level);
+                            const int &level,
+                            const Trokam::PageInfo &info);
+
+            void setPageState(const int &index,
+                              const int &error);
 
         private:
 
             Trokam::Options settings;
             Trokam::Postgresql db;
+            Trokam::Reporting msg;
 
-            int insertOneSequence(const std::string &value);
+            void insertSequences(const int &index,
+                                 const Trokam::TextStore &bag);
 
-            void insertSevSequences(const int &index,
-                                    const boost::scoped_ptr<Trokam::TextStore> &bag);
+            void insertTraits(const int &index,
+                              const Trokam::PageInfo &info);
 
             void insertUrls(const std::string &links,
                             const int &level);
 
             void deleteSeqOccOfPage(const int &pageIndex);
 
-            void insertSeqOccInPage(const int &pageIndex,
-                                    const int &seqIndex,
-                                    const int &occurrence);
-
-            void insertSeqOccInPage(const int &pageIndex,
-                                    const std::string &sequence,
-                                    const int &occurrence);
-
             std::string generateSentenceOccInPage(const int &pageIndex,
-                                                  const std::string &sequence,
-                                                  const int &occurrence);
+                                                  const Trokam::TextOcc &to);
 
-            void setCrunched(const int &pageIndex);
+            void setCrunched(const int &pageIndex,
+                             const Trokam::PageInfo &info);
 
             void savePageContent(const int &pageIndex,
                                  const std::string &value);

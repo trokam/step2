@@ -43,13 +43,13 @@ namespace Trokam
              * Extract the sequences of text.
              **/
             static void extractSequences(std::string &content,
-                                         boost::scoped_ptr<Trokam::TextStore> &store);
+                                         Trokam::TextStore &bag);
 
             /**
-             * Extract the sequences of text.
+             * Extract the title from content.
              **/
-            static void extractUrls(std::string &links,
-                                    boost::scoped_ptr<Trokam::TextStore> &urlBag);
+            static void extractTitle(const std::string &content,
+                                     std::string &title);
 
             /**
              * Split the URL into protocol, domain and path.

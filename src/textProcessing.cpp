@@ -34,13 +34,20 @@
 #include "textProcessing.h"
 
 void Trokam::TextProcessing::extractSequences(std::string &content,
-                                              boost::scoped_ptr<Trokam::TextStore> &store)
+                                              Trokam::TextStore &bag)
 {
-    std::cout << "getting sequences ..." << std::endl;
+    std::cout << "extracting sequences ..." << std::endl;
 
+    /**
+     * All the text is processed in lower case.
+     **/
     boost::algorithm::to_lower(content);
 
-    // std::cout << "text: " << content.substr(0, 200) << std::endl;
+    /**
+     * Remove all single quotes.
+     **/
+    boost::replace_all(content, "'s", "");
+    boost::replace_all(content, "'", "");
 
     boost::tokenizer<> tok(content);
     for(boost::tokenizer<>::iterator it= tok.begin(); it!=tok.end(); it++)
@@ -61,7 +68,7 @@ void Trokam::TextProcessing::extractSequences(std::string &content,
             }
 
             boost::algorithm::trim_if(sequence, boost::algorithm::is_any_of(" \n\r"));
-            store->insert(sequence);
+            bag.insert(sequence);
 
             /**
              * If the iterator reaches the end of the content,
@@ -74,30 +81,11 @@ void Trokam::TextProcessing::extractSequences(std::string &content,
             }
         }
     }
-}
 
-void Trokam::TextProcessing::extractUrls(std::string &links,
-                                         boost::scoped_ptr<Trokam::TextStore> &bag)
-{
-    std::istringstream input(links);
-    for(std::string line; std::getline(input, line);)
-    {
-        /**
-         * Trimming of unwanted characters.
-         **/
-        boost::algorithm::trim_if(line, boost::algorithm::is_any_of(" \n\r\""));
-
-        /**
-         * Verify that it starts with http or https.
-         **/
-        const std::string first7= line.substr(0, 7);
-        const std::string first8= line.substr(0, 8);
-
-        if((first7==HTTP) || (first8==HTTPS))
-        {
-            bag->insert(line);
-        }
-    }
+    /**
+     * Set the relevance of each sequence.
+     **/
+    bag.setRelevance(content.length());
 }
 
 bool Trokam::TextProcessing::splitUrl(const std::string &url,
@@ -169,4 +157,34 @@ std::string Trokam::TextProcessing::rightPadding(const std::string &text,
     }
 
     return (text + piece);
+}
+
+
+void Trokam::TextProcessing::extractTitle(const std::string &content,
+                                          std::string &title)
+{
+    std::size_t ini= content.find("<title>");
+    std::size_t end= content.find("</title>");
+    if((ini != std::string::npos) && (end != std::string::npos))
+    {
+        title= content.substr(ini+7, end-ini-7);
+    }
+
+    /**
+     * Clean the title from unwanted characters.
+     **/
+    boost::algorithm::to_lower(title);
+    boost::algorithm::trim_if(title, boost::algorithm::is_any_of(" \n\r\t"));
+
+    /**
+     * Remove all single quotes from title.
+     **/
+    boost::replace_all(title, "'s", "");
+    boost::replace_all(title, "'", "");
+
+    /**
+     * Remove unreadable strings.
+     **/
+    boost::replace_all(title, "&nbsp;", "");
+    boost::replace_all(title, "&ndash;", "");
 }
