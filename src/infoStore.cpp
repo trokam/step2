@@ -49,7 +49,8 @@ void Trokam::InfoStore::getUrlForProcessing(int &index,
     selectSentence+= "FROM page ";
     selectSentence+= "WHERE processing=false ";
     selectSentence+= "ORDER BY crunched ASC, level ASC ";
-    selectSentence+= "LIMIT 1";
+    selectSentence+= "LIMIT 1 ";
+    selectSentence+= "FOR UPDATE ";
 
     std::string updateSentence;
     updateSentence=  "UPDATE page ";
@@ -110,10 +111,15 @@ bool Trokam::InfoStore::insertPage(const std::string &url,
     catch(const pqxx::sql_error &e)
     {
         /**
-         * If the URL already exists, then a 'duplicate key' error
-         * is thrown and is catched here. Nothing else to do.
+         * Only if the error is different to 'duplicate key value
+         * violates unique constraint page_unique' is shown.
+         * Duplicate URLs are fairly common and they occurrence
+         * are not a failure.
          **/
-        msg.showSqlError(e);
+        if(e.query().find(PAGE_UNIQUE) !=  std::string::npos)
+        {
+            msg.showSqlError(e);
+        }
         return false;
     }
     return true;

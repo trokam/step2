@@ -213,7 +213,7 @@ int Trokam::Options::level() const
 void Trokam::Options::createWorkingDirectory()
 {
     int pid= getpid();
-    optWorkingDir= "/tmp/trokam/cruncher_" + std::to_string(pid);
+    optWorkingDir= "/tmp/trokam/process_" + std::to_string(pid);
     std::cout << "creating: '" << optWorkingDir << "'\n";
     Trokam::FileOps::mkDir(optWorkingDir);
 }

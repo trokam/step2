@@ -51,9 +51,9 @@ namespace Trokam
 
             void processingOutcome(const Trokam::PageInfo &info);
 
-            void showGeneralError(const int &error);
-
             void showSqlError(const pqxx::sql_error &error);
+
+            static void showGeneralError(const int &error);
 
         private:
 

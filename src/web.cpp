@@ -57,7 +57,7 @@ void Trokam::Web::fetch(const std::string &url,
     /**
      * Download the web page and put it in a file.
      **/
-    command= "wget -q --timeout=60 -O " + rawFile + " -k \"" + url + "\"";
+    command= "wget -q --timeout=10 --tries=1 -O " + rawFile + " -k \"" + url + "\"";
     status= system(command.c_str());
     if(status!=0)
     {

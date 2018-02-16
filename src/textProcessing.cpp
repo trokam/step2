@@ -49,18 +49,19 @@ void Trokam::TextProcessing::extractSequences(std::string &content,
     boost::replace_all(content, "'s", "");
     boost::replace_all(content, "'", "");
 
-    boost::tokenizer<> tok(content);
-    for(boost::tokenizer<>::iterator it= tok.begin(); it!=tok.end(); it++)
-    {
-        int limit= 5;
+    int wordCount= 0;
+    int textLength= 0;
 
-        for(int maxLen= 1; maxLen<=limit; maxLen++)
+    boost::tokenizer<> tok(content);
+    for(boost::tokenizer<>::iterator it= tok.begin(); it!=tok.end(); ++it)
+    {
+        for(int maxLen= 1; maxLen<=SEQUENCE_SIZE; maxLen++)
         {
             int len=0;
             std::string sequence;
 
             boost::tokenizer<>::iterator sec;
-            for(sec= it; ((sec!=tok.end()) && (len<maxLen)); sec++)
+            for(sec= it; ((sec!=tok.end()) && (len<maxLen)); ++sec)
             {
                 std::string token= *sec;
                 sequence+= token + " ";
@@ -80,7 +81,17 @@ void Trokam::TextProcessing::extractSequences(std::string &content,
                 break;
             }
         }
+
+        wordCount++;
+        textLength+= it->length();
+
+        if ((wordCount >= WORDS_LIMIT) || (textLength >= TEXT_LIMIT))
+        {
+            break;
+        }
     }
+
+    std::cout << "wordCount: " << wordCount << " textLength: " << textLength << std::endl;
 
     /**
      * Set the relevance of each sequence.

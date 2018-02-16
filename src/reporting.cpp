@@ -75,6 +75,10 @@ void Trokam::Reporting::showGeneralError(const int &error)
     {
         std::cerr << ERROR_EXTRACTING_LINKS_FAIL << std::endl;
     }
+    else if(error == COULD_NOT_CONNECT_TO_DATABASE)
+    {
+        std::cerr << ERROR_COULD_NOT_CONNECT_TO_DATABASE << std::endl;
+    }
     else
     {
         std::cerr << "error: " << error << "\n";

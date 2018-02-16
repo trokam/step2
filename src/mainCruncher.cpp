@@ -28,6 +28,7 @@
 #include "common.h"
 #include "cruncher.h"
 #include "options.h"
+#include "reporting.h"
 
 /**
  * Cruncher extract information of web pages and local files, and insert
@@ -41,15 +42,22 @@ int main(int argc, const char* argv[])
     Trokam::Options opt(argc, argv);
     opt.readSettings(CONFIG_FILE);
 
-    /**
-     * Instantiate the web cruncher.
-     **/
-    Trokam::Cruncher c(opt);
+    try
+    {
+        /**
+         * Instantiate the web cruncher.
+         **/
+        Trokam::Cruncher c(opt);
 
-    /**
-     * Execue the web cruncher.
-     **/
-    c.run();
+        /**
+         * Execue the web cruncher.
+         **/
+        c.run();
+    }
+    catch(const int &e)
+    {
+        Trokam::Reporting::showGeneralError(e);
+    }
 
     /**
      * Cleaning up.

@@ -26,6 +26,7 @@
 #include <iostream>
 
 /// Trokam
+#include "common.h"
 #include "postgresql.h"
 
 Trokam::Postgresql::Postgresql(const Trokam::Options &value)
@@ -52,13 +53,21 @@ Trokam::Postgresql::Postgresql(const Trokam::Options &value)
         connParameters+= "password=" + value.dbPass() + " ";
     }
 
-    std::cout << "connecting parameters: " << connParameters << "\n";
+    // std::cout << "connecting parameters: " << connParameters << "\n";
 
-    dbConnection= new pqxx::connection(connParameters);
+    try
+    {
+        dbConnection= new pqxx::connection(connParameters);
+        std::cout << "connected to database \n";
+        std::cout << "backend version: " << dbConnection->server_version() << "\n";
+        std::cout << "protocol version: " << dbConnection->protocol_version() << std::endl;
 
-    std::cout << "connected to database \n";
-    std::cout << "backend version: " << dbConnection->server_version() << "\n";
-    std::cout << "protocol version: " << dbConnection->protocol_version() << std::endl;
+    }
+    catch(const std::exception &e)
+    {
+        std::cerr << "Exception: " << e.what() << std::endl;
+        throw COULD_NOT_CONNECT_TO_DATABASE;
+    }
 }
 
 Trokam::Postgresql::~Postgresql()
@@ -132,7 +141,7 @@ void Trokam::Postgresql::execSql(const std::string &sentence,
     }
     catch(const pqxx::sql_error &e)
     {
-        throw e;
+        throw(e);
     }
     catch(const std::exception &e)
     {

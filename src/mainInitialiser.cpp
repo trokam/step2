@@ -27,12 +27,9 @@
 /// Trokam
 #include "common.h"
 #include "initialiser.h"
+#include "reporting.h"
 #include "options.h"
 
-/**
- *
- *
- **/
 int main(int argc, const char* argv[])
 {
     /**
@@ -41,9 +38,21 @@ int main(int argc, const char* argv[])
     Trokam::Options opt(argc, argv);
     opt.readSettings(CONFIG_FILE);
 
+    try
+    {
+        /**
+         * Initialise the database.
+         **/
+        Trokam::Initialiser ini(opt);
+        ini.fill();
+    }
+    catch(const int &e)
+    {
+        Trokam::Reporting::showGeneralError(e);
+    }
+
     /**
-     * Initialise the database.
+     * Cleaning up.
      **/
-    Trokam::Initialiser ini(opt);
-    ini.fill();
+    opt.deleteWorkingDirectory();
 }
