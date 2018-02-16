@@ -90,7 +90,7 @@ void Trokam::Cruncher::run()
         }
         catch(const int &e)
         {
-            msg.showGeneralError(e);
+            Trokam::Reporting::showGeneralError(e);
             action(index, e);
         }
     }
