@@ -32,6 +32,17 @@ LDLIBS= -lboost_system \
         -lpqxx \
         -lmagic
 
+LDLIBS_WEB= -lboost_program_options \
+            -lboost_regex \
+            -lboost_signals \
+            -lboost_system \
+            -lboost_thread \
+            -lpqxx \
+            -lmagic \
+            -lwt \
+		    -lwthttp
+#       -lwtfcgi
+
 BIN=./bin
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -65,12 +76,25 @@ SOURCES_INITIALISER= src/mainInitialiser.cpp \
 
 OBJECTS_INITIALISER=$(SOURCES_INITIALISER:.cpp=.o)
 
+SOURCES_WEBSEARCH= src/mainWebSearch.cpp \
+                   src/appGenerator.cpp \
+                   src/fileOps.cpp \
+                   src/infoStore.cpp \
+                   src/options.cpp \
+                   src/postgresql.cpp \
+                   src/reporting.cpp \
+                   src/sharedResources.cpp \
+                   src/textProcessing.cpp \
+                   src/textStore.cpp \
+                   src/topWindow.cpp
+
+OBJECTS_WEBSEARCH=$(SOURCES_WEBSEARCH:.cpp=.o)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # targets
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-all: cruncher initialiser
+all: cruncher initialiser websearch
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # individual recipes
@@ -81,6 +105,9 @@ cruncher: $(OBJECTS_CRUNCHER)
 
 initialiser: $(OBJECTS_INITIALISER)
 	$(CC) $(LDFLAGS) $(OBJECTS_INITIALISER) -o $(BIN)/$@ $(LDLIBS)
+
+websearch: $(OBJECTS_WEBSEARCH)
+	$(CC) $(LDFLAGS) $(OBJECTS_WEBSEARCH) -o $(BIN)/$@ $(LDLIBS_WEB)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # These are the list of files and the automatically
