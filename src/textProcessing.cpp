@@ -109,6 +109,8 @@ int Trokam::TextProcessing::relevance(const std::string &block,
     }
 
     int value= 1;
+    std::string lcBlock= block;
+    boost::algorithm::to_lower(lcBlock);
 
     float lenSequence= 0.0;
     Trokam::DifferentStrings stringBag;
@@ -124,13 +126,13 @@ int Trokam::TextProcessing::relevance(const std::string &block,
     for(int i= 0; i<stringBag.size(); i++)
     {
         const std::string token= stringBag.get(i);
-        if(block.find(token) != std::string::npos)
+        if(lcBlock.find(token) != std::string::npos)
         {
             lenIncluded+= token.length();
         }
     }
 
-    const float lenBlock= block.length();
+    const float lenBlock= lcBlock.length();
 
     if((int(lenSequence) == 0) ||
        (int(lenIncluded) == 0))
