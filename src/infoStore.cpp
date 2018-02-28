@@ -97,8 +97,7 @@ bool Trokam::InfoStore::insertPage(const std::string &url,
                 sentence+= std::to_string(level) + ", ";
                 sentence+= "false, ";
                 sentence+= "'" + OUT_OF_TIME + "', ";
-                sentence+=  std::to_string(UNKNOWN) + ", ";
-                sentence+= "'" + EMPTY + "' ";
+                sentence+=  std::to_string(UNKNOWN) + " ";
                 sentence+= ") ";
                 db.execSql(sentence);
             }
@@ -116,7 +115,8 @@ bool Trokam::InfoStore::insertPage(const std::string &url,
          * Duplicate URLs are fairly common and they occurrence
          * are not a failure.
          **/
-        if(e.query().find(PAGE_UNIQUE) !=  std::string::npos)
+        const std::string error(e.what());
+        if(error.find(PAGE_UNIQUE) ==  std::string::npos)
         {
             msg.showSqlError(e);
         }
@@ -130,6 +130,8 @@ void Trokam::InfoStore::insertPage(const int &index,
                                    const Trokam::PageInfo &info)
 {
     insertSequences(index, info.sequences);
+    insertSequenceOccurrence(info.sequences);
+    updateSequenceOccurrence(info.sequences);
     insertTraits(index, info);
     insertUrls(info.links, level+1);
     savePageContent(index, info.content);
@@ -139,20 +141,72 @@ void Trokam::InfoStore::insertPage(const int &index,
 void Trokam::InfoStore::insertSequences(const int &pageIndex,
                                         const Trokam::TextStore &bag)
 {
-    std::cout << "inserting sequences and their occurrences ...\n";
+    std::cout << "inserting sequences relevance by page ...\n";
 
     try
     {
-        deleteSeqOccOfPage(pageIndex);
-
         std::vector<std::string> bundle;
         for(int i=0; i<bag.size(); i++)
         {
             const TextOcc to= bag.get(i);
-            const std::string sentence= generateSentenceOccInPage(pageIndex, to);
-            bundle.push_back(sentence);
+            if(to.relevanceTotal >= RELEVANCE_THRESHOLD)
+            {
+                const std::string sentence= generateSentenceOccInPage(pageIndex, to);
+                bundle.push_back(sentence);
+            }
         }
         db.execSql(bundle);
+        std::cout << "inserted: " << bundle.size() << " sequences.\n";
+    }
+    catch(const pqxx::sql_error &e)
+    {
+        msg.showSqlError(e);
+    }
+}
+
+void Trokam::InfoStore::insertSequenceOccurrence(const Trokam::TextStore &bag)
+{
+    std::cout << "inserting sequence occurrence ...\n";
+
+    try
+    {
+        std::vector<std::string> bundle;
+        for(int i=0; i<bag.size(); i++)
+        {
+            const TextOcc to= bag.get(i);
+            if(to.relevanceTotal >= RELEVANCE_THRESHOLD)
+            {
+                const std::string sentence= generateSentenceInsertSeqOcc(to);
+                bundle.push_back(sentence);
+            }
+        }
+        db.execSql(bundle);
+        std::cout << "inserting: " << bundle.size() << " sequences and occurrences.\n";
+    }
+    catch(const pqxx::sql_error &e)
+    {
+        msg.showSqlError(e);
+    }
+}
+
+void Trokam::InfoStore::updateSequenceOccurrence(const Trokam::TextStore &bag)
+{
+    std::cout << "updating sequence occurrence ...\n";
+
+    try
+    {
+        std::vector<std::string> bundle;
+        for(int i=0; i<bag.size(); i++)
+        {
+            const TextOcc to= bag.get(i);
+            if(to.relevanceTotal >= RELEVANCE_THRESHOLD)
+            {
+                const std::string sentence= generateSentenceUpdateOcc(to);
+                bundle.push_back(sentence);
+            }
+        }
+        db.execSql(bundle);
+        std::cout << "updated: " << bundle.size() << " sequences.\n";
     }
     catch(const pqxx::sql_error &e)
     {
@@ -233,8 +287,7 @@ void Trokam::InfoStore::setCrunched(const int &index,
     sentence=  "UPDATE page ";
     sentence+= "SET processing=false, ";
     sentence+= "crunched=(SELECT current_date), ";
-    sentence+= "state=" + std::to_string(SUCCESS) + ", ";
-    sentence+= "type='" + info.type + "' ";
+    sentence+= "state=" + std::to_string(SUCCESS) + " ";
     sentence+= "WHERE index=(" + std::to_string(index) + ") ";
     db.execSql(sentence);
 }
@@ -248,8 +301,7 @@ void Trokam::InfoStore::setPageState(const int &index,
     sentence=  "UPDATE page ";
     sentence+= "SET processing=false, ";
     sentence+= "crunched=(SELECT current_date), ";
-    sentence+= "state=" + std::to_string(error) + ", ";
-    sentence+= "type='' ";
+    sentence+= "state=" + std::to_string(error) + " ";
     sentence+= "WHERE index=(" + std::to_string(index) + ") ";
     db.execSql(sentence);
 }
@@ -293,7 +345,34 @@ std::string Trokam::InfoStore::generateSentenceOccInPage(const int &pageIndex,
     sentence+= "SELECT index FROM s) ";
     sentence+= "INSERT INTO page_seq VALUES (" + std::to_string(pageIndex) + ", ";
     sentence+= "(SELECT index FROM m), ";
+    sentence+= "1, ";
     sentence+= std::to_string(to.occurrence) + ", ";
-    sentence+= std::to_string(to.relevance) + ") ";
+    sentence+= std::to_string(to.relevanceInBody) + ", ";
+    sentence+= std::to_string(to.relevanceInUrl) + ", ";
+    sentence+= std::to_string(to.relevanceInTitle) + ", ";
+    sentence+= std::to_string(to.relevanceTotal) + ") ";
+    return sentence;
+}
+
+std::string Trokam::InfoStore::generateSentenceInsertSeqOcc(const Trokam::TextOcc &to)
+{
+    std::string sentence;
+    sentence=  "WITH s AS (SELECT index FROM sequence WHERE value= '" +  to.text + "') ";
+    sentence+= "INSERT INTO seq_occ(\"index_sequence\", \"index_period\", \"count\") ";
+    sentence+= "VALUES ((SELECT index FROM s), 1, 0) ";
+    sentence+= "ON CONFLICT ON CONSTRAINT unique_seq_occ DO NOTHING";
+    return sentence;
+}
+
+std::string Trokam::InfoStore::generateSentenceUpdateOcc(const Trokam::TextOcc &to)
+{
+    std::string sentence;
+    sentence=  "UPDATE seq_occ ";
+    sentence+= "SET count = count + " + std::to_string(to.occurrence) + " ";
+    sentence+= "FROM sequence, period ";
+    sentence+= "WHERE seq_occ.index_sequence=sequence.index ";
+    sentence+= "AND seq_occ.index_period=period.index ";
+    sentence+= "AND period.index=1 ";
+    sentence+= "AND sequence.value='" + to.text + "' ";
     return sentence;
 }

@@ -42,8 +42,11 @@ namespace Trokam
             /**
              * Extract the sequences of text.
              **/
-            static void extractSequences(std::string &content,
+            static int extractSequences(std::string &content,
                                          Trokam::TextStore &bag);
+
+            static int relevance(const std::string &block,
+                                 const std::string &piece);
 
             /**
              * Extract the title from content.
@@ -67,6 +70,10 @@ namespace Trokam
             static std::string rightPadding(const std::string &text,
                                             const int &total_length,
                                             const std::string &fill= " ");
+
+            static void removeUnwantedChars(std::string &text);
+
+            static void removeUglyChars(std::string &text);
     };
 }
 

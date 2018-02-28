@@ -24,9 +24,11 @@
 /// C++
 #include <algorithm>
 #include <iostream>
+#include <cmath>
 
 /// Trokam
 #include "textStore.h"
+#include "textProcessing.h"
 
 Trokam::TextStore::TextStore()
 {
@@ -58,6 +60,9 @@ void Trokam::TextStore::insert(const std::string &text)
     Trokam::TextOcc to;
     to.text= text;
     to.occurrence= 1;
+    to.relevanceInBody= 1;
+    to.relevanceInUrl= 1;
+    to.relevanceInTitle= 1;
     textCollection.push_back(to);
 }
 
@@ -65,15 +70,23 @@ void Trokam::TextStore::show(const int &value)
 {
     if(sorted == false)
     {
-        sort();
+        sortRelevanceTotal();
         sorted= true;
     }
 
     int count= 0;
     for(std::vector<Trokam::TextOcc>::iterator it= textCollection.begin(); it!=textCollection.end(); ++it)
     {
-        std::cout << "occ: [" << it->occurrence << "]\tseq: [" << it->text << "]\n";
+        std::string text= "[" + it->text + "]";
+        text= Trokam::TextProcessing::rightPadding(text, 50);
+
+        std::cout << "seq: " << text
+                  << "\tbody: [" << it->relevanceInBody
+                  << "]\turl: [" << it->relevanceInUrl
+                  << "]\ttitle: [" << it->relevanceInTitle
+                  << "]\ttotal: [" << it->relevanceTotal << "]\n";
         count++;
+
         if(count > value)
         {
             return;
@@ -91,25 +104,39 @@ Trokam::TextOcc Trokam::TextStore::get(const int &id) const
     return textCollection[id];
 }
 
-void Trokam::TextStore::sort()
+void Trokam::TextStore::sortRelevanceBody()
 {
     std::sort(textCollection.begin(),
               textCollection.end(),
               [](Trokam::TextOcc a, Trokam::TextOcc b)
                 {
-                    return (a.occurrence > b.occurrence);
+                    return (a.relevanceInBody > b.relevanceInBody);
                 }
              );
 }
 
-void Trokam::TextStore::setRelevance(const int &total)
+void Trokam::TextStore::sortRelevanceTotal()
+{
+    std::sort(textCollection.begin(),
+              textCollection.end(),
+              [](Trokam::TextOcc a, Trokam::TextOcc b)
+                {
+                    return (a.relevanceTotal > b.relevanceTotal);
+                }
+             );
+}
+
+void Trokam::TextStore::setRelevance(const int &total,
+                                     const std::string &title,
+                                     const std::string &url)
 {
     float length= float(total);
-
-    std::cout << "length: " << length << "\n";
-
     for(std::vector<Trokam::TextOcc>::iterator it= textCollection.begin(); it!=textCollection.end(); ++it)
     {
-        it->relevance= float(it->occurrence)/length;
+        float value= float(1000 * it->occurrence * it->text.length())/length;
+        it->relevanceInBody= int(value);
+        it->relevanceInTitle= Trokam::TextProcessing::relevance(title, it->text);
+        it->relevanceInUrl= Trokam::TextProcessing::relevance(url, it->text);
+        it->relevanceTotal= it->relevanceInBody * it->relevanceInTitle * it->relevanceInUrl;
     }
 }

@@ -70,6 +70,9 @@ void Trokam::Cruncher::run()
             storage.getUrlForProcessing(index, url, level);
             msg.processingNow(pages, index, url, level);
 
+
+            info.url= url;
+
             /**
              * Fetch the URL content.
              **/

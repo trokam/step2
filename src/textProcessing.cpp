@@ -24,6 +24,7 @@
 /// C++
 #include <iostream>
 #include <sstream>
+#include <cctype>
 
 /// Boost
 #include <boost/algorithm/string.hpp>
@@ -31,36 +32,38 @@
 
 /// Trokam
 #include "common.h"
+#include "differentStrings.h"
 #include "textProcessing.h"
 
-void Trokam::TextProcessing::extractSequences(std::string &content,
+int Trokam::TextProcessing::extractSequences(std::string &content,
                                               Trokam::TextStore &bag)
 {
     std::cout << "extracting sequences ..." << std::endl;
 
     /**
-     * All the text is processed in lower case.
+     * Convert text to lower case and remove
+     * unwanted characters.
      **/
     boost::algorithm::to_lower(content);
-
-    /**
-     * Remove all single quotes.
-     **/
-    boost::replace_all(content, "'s", "");
-    boost::replace_all(content, "'", "");
+    removeUnwantedChars(content);
 
     int wordCount= 0;
     int textLength= 0;
 
-    boost::tokenizer<> tok(content);
-    for(boost::tokenizer<>::iterator it= tok.begin(); it!=tok.end(); ++it)
+    typedef boost::char_separator<char> char_sep;
+    typedef boost::tokenizer<char_sep> tokenizer;
+
+    boost::char_separator<char> sep(" —_,.;/*-=|»<>[](){}&\n\r\t\"");
+    tokenizer tok(content, sep);
+
+    for(tokenizer::iterator it= tok.begin(); it!=tok.end(); ++it)
     {
         for(int maxLen= 1; maxLen<=SEQUENCE_SIZE; maxLen++)
         {
             int len=0;
             std::string sequence;
 
-            boost::tokenizer<>::iterator sec;
+            tokenizer::iterator sec;
             for(sec= it; ((sec!=tok.end()) && (len<maxLen)); ++sec)
             {
                 std::string token= *sec;
@@ -68,7 +71,7 @@ void Trokam::TextProcessing::extractSequences(std::string &content,
                 len++;
             }
 
-            boost::algorithm::trim_if(sequence, boost::algorithm::is_any_of(" \n\r"));
+            boost::algorithm::trim_if(sequence, boost::algorithm::is_any_of(" "));
             bag.insert(sequence);
 
             /**
@@ -92,11 +95,52 @@ void Trokam::TextProcessing::extractSequences(std::string &content,
     }
 
     std::cout << "wordCount: " << wordCount << " textLength: " << textLength << std::endl;
+    return textLength;
+}
 
-    /**
-     * Set the relevance of each sequence.
-     **/
-    bag.setRelevance(content.length());
+
+int Trokam::TextProcessing::relevance(const std::string &block,
+                                      const std::string &piece)
+{
+    if((block.length() == 0) ||
+       (piece.length() == 0))
+    {
+        return 1;
+    }
+
+    int value= 1;
+
+    float lenSequence= 0.0;
+    Trokam::DifferentStrings stringBag;
+    boost::tokenizer<> tok(piece);
+    for(boost::tokenizer<>::iterator it= tok.begin(); it!=tok.end(); ++it)
+    {
+        const std::string token= *it;
+        lenSequence+= token.length();
+        stringBag.insert(token);
+    }
+
+    float lenIncluded= 0.0;
+    for(int i= 0; i<stringBag.size(); i++)
+    {
+        const std::string token= stringBag.get(i);
+        if(block.find(token) != std::string::npos)
+        {
+            lenIncluded+= token.length();
+        }
+    }
+
+    const float lenBlock= block.length();
+
+    if((int(lenSequence) == 0) ||
+       (int(lenIncluded) == 0))
+    {
+        return 1;
+    }
+
+    value = int((100 * lenIncluded * lenIncluded) / (lenBlock * lenSequence));
+
+    return value;
 }
 
 bool Trokam::TextProcessing::splitUrl(const std::string &url,
@@ -182,20 +226,44 @@ void Trokam::TextProcessing::extractTitle(const std::string &content,
     }
 
     /**
-     * Clean the title from unwanted characters.
+     * Convert to lower case, trim and clean the title
+     * from unwanted characters.
      **/
-    boost::algorithm::to_lower(title);
     boost::algorithm::trim_if(title, boost::algorithm::is_any_of(" \n\r\t"));
+    boost::algorithm::to_lower(title);
+    removeUnwantedChars(title);
+    removeUglyChars(title);
+}
 
+void Trokam::TextProcessing::removeUnwantedChars(std::string &text)
+{
     /**
-     * Remove all single quotes from title.
+     * Remove all single quotes.
      **/
-    boost::replace_all(title, "'s", "");
-    boost::replace_all(title, "'", "");
+    boost::replace_all(text, "'s", "");
+    boost::replace_all(text, "'", "");
 
+    for(unsigned int i= 0; i<text.length(); i++)
+    {
+        if(int(text[i])<0)
+        {
+            text.replace(i, 1, " ");
+        }
+    }
+}
+
+void Trokam::TextProcessing::removeUglyChars(std::string &text)
+{
     /**
      * Remove unreadable strings.
      **/
-    boost::replace_all(title, "&nbsp;", "");
-    boost::replace_all(title, "&ndash;", "");
+    boost::replace_all(text, "&nbsp;", "");
+    boost::replace_all(text, "&ndash;", "");
+
+    /**
+     * Remove strange characters.
+     **/
+    boost::replace_all(text, "\n", " ");
+    boost::replace_all(text, "\r", " ");
+    boost::replace_all(text, "\t", " ");
 }

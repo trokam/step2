@@ -34,8 +34,10 @@
 void Trokam::PageProcessing::extractPageInfo(Trokam::PageInfo &info)
 {
     Trokam::TextProcessing::extractTitle(info.raw, info.title);
-    Trokam::TextProcessing::extractSequences(info.content, info.sequences);
+    const int textLength= Trokam::TextProcessing::extractSequences(info.content, info.sequences);
     computeComplexity(info);
+    info.sequences.setRelevance(textLength, info.title, info.url);
+    info.sequences.show(15);
 }
 
 
@@ -52,3 +54,4 @@ void Trokam::PageProcessing::computeComplexity(Trokam::PageInfo &info)
         info.complexity= 0;
     }
 }
+

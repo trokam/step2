@@ -34,9 +34,10 @@ const std::string CONFIG_FILE= "/usr/local/etc/trokam.cfg";
  * Processing parameters.
  **/
 
-const int SEQUENCE_SIZE =             4;
-const int WORDS_LIMIT =             500;
+const int SEQUENCE_SIZE =             5;
+const int WORDS_LIMIT =            5000;
 const int TEXT_LIMIT =    4*WORDS_LIMIT;
+const int RELEVANCE_THRESHOLD=      100;
 
 /**
  * String literals.

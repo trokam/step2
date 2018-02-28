@@ -73,6 +73,10 @@ namespace Trokam
             void insertSequences(const int &index,
                                  const Trokam::TextStore &bag);
 
+            void insertSequenceOccurrence(const Trokam::TextStore &bag);
+
+            void updateSequenceOccurrence(const Trokam::TextStore &bag);
+
             void insertTraits(const int &index,
                               const Trokam::PageInfo &info);
 
@@ -83,6 +87,10 @@ namespace Trokam
 
             std::string generateSentenceOccInPage(const int &pageIndex,
                                                   const Trokam::TextOcc &to);
+
+            std::string generateSentenceInsertSeqOcc(const Trokam::TextOcc &to);
+
+            std::string generateSentenceUpdateOcc(const Trokam::TextOcc &to);
 
             void setCrunched(const int &pageIndex,
                              const Trokam::PageInfo &info);

@@ -18,7 +18,7 @@
 -- DROP TABLE IF EXISTS public.sequence CASCADE;
 CREATE TABLE public.sequence(
 	index serial NOT NULL,
-	value varchar(1000) NOT NULL,
+	value varchar(200) NOT NULL,
 	CONSTRAINT text_pkey PRIMARY KEY (index),
 	CONSTRAINT value_unique UNIQUE (value)
 
@@ -38,7 +38,6 @@ CREATE TABLE public.page(
 	processing bool NOT NULL,
 	crunched date NOT NULL,
 	state smallint NOT NULL,
-	type varchar(200) NOT NULL,
 	CONSTRAINT page_pkey PRIMARY KEY (index),
 	CONSTRAINT page_unique UNIQUE (protocol,domain,path)
 
@@ -52,8 +51,12 @@ ALTER TABLE public.page OWNER TO postgres;
 CREATE TABLE public.page_seq(
 	index_page integer,
 	index_sequence integer,
+	index_period integer,
 	count integer NOT NULL,
-	relevance float NOT NULL
+	relevance_in_body smallint NOT NULL,
+	relevance_in_url smallint NOT NULL,
+	relevance_in_title smallint NOT NULL,
+	relevance_total integer NOT NULL
 );
 -- ddl-end --
 ALTER TABLE public.page_seq OWNER TO postgres;
@@ -71,11 +74,6 @@ ON DELETE SET NULL ON UPDATE CASCADE;
 ALTER TABLE public.page_seq ADD CONSTRAINT sequence_fk FOREIGN KEY (index_sequence)
 REFERENCES public.sequence (index) MATCH FULL
 ON DELETE SET NULL ON UPDATE CASCADE;
--- ddl-end --
-
--- object: unique_page_text | type: CONSTRAINT --
--- ALTER TABLE public.page_seq DROP CONSTRAINT IF EXISTS unique_page_text CASCADE;
-ALTER TABLE public.page_seq ADD CONSTRAINT unique_page_text UNIQUE (index_page,index_sequence);
 -- ddl-end --
 
 -- object: public.trait | type: TABLE --
@@ -100,6 +98,60 @@ ON DELETE SET NULL ON UPDATE CASCADE;
 -- object: trait_uq | type: CONSTRAINT --
 -- ALTER TABLE public.trait DROP CONSTRAINT IF EXISTS trait_uq CASCADE;
 ALTER TABLE public.trait ADD CONSTRAINT trait_uq UNIQUE (index_page);
+-- ddl-end --
+
+-- object: public.period | type: TABLE --
+-- DROP TABLE IF EXISTS public.period CASCADE;
+CREATE TABLE public.period(
+	index serial NOT NULL,
+	start date NOT NULL,
+	CONSTRAINT period_pkey PRIMARY KEY (index)
+
+);
+-- ddl-end --
+ALTER TABLE public.period OWNER TO postgres;
+-- ddl-end --
+
+-- object: public.seq_occ | type: TABLE --
+-- DROP TABLE IF EXISTS public.seq_occ CASCADE;
+CREATE TABLE public.seq_occ(
+	index_sequence integer,
+	index_period integer,
+	count integer NOT NULL
+);
+-- ddl-end --
+ALTER TABLE public.seq_occ OWNER TO postgres;
+-- ddl-end --
+
+-- object: sequence_fk | type: CONSTRAINT --
+-- ALTER TABLE public.seq_occ DROP CONSTRAINT IF EXISTS sequence_fk CASCADE;
+ALTER TABLE public.seq_occ ADD CONSTRAINT sequence_fk FOREIGN KEY (index_sequence)
+REFERENCES public.sequence (index) MATCH FULL
+ON DELETE SET NULL ON UPDATE CASCADE;
+-- ddl-end --
+
+-- object: period_fk | type: CONSTRAINT --
+-- ALTER TABLE public.seq_occ DROP CONSTRAINT IF EXISTS period_fk CASCADE;
+ALTER TABLE public.seq_occ ADD CONSTRAINT period_fk FOREIGN KEY (index_period)
+REFERENCES public.period (index) MATCH FULL
+ON DELETE SET NULL ON UPDATE CASCADE;
+-- ddl-end --
+
+-- object: period_fk | type: CONSTRAINT --
+-- ALTER TABLE public.page_seq DROP CONSTRAINT IF EXISTS period_fk CASCADE;
+ALTER TABLE public.page_seq ADD CONSTRAINT period_fk FOREIGN KEY (index_period)
+REFERENCES public.period (index) MATCH FULL
+ON DELETE SET NULL ON UPDATE CASCADE;
+-- ddl-end --
+
+-- object: unique_page_text | type: CONSTRAINT --
+-- ALTER TABLE public.page_seq DROP CONSTRAINT IF EXISTS unique_page_text CASCADE;
+ALTER TABLE public.page_seq ADD CONSTRAINT unique_page_text UNIQUE (index_page,index_sequence,index_period);
+-- ddl-end --
+
+-- object: unique_seq_occ | type: CONSTRAINT --
+-- ALTER TABLE public.seq_occ DROP CONSTRAINT IF EXISTS unique_seq_occ CASCADE;
+ALTER TABLE public.seq_occ ADD CONSTRAINT unique_seq_occ UNIQUE (index_sequence,index_period);
 -- ddl-end --
 
 

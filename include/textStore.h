@@ -38,7 +38,10 @@ namespace Trokam
     {
         std::string text;
         int occurrence;
-        float relevance;
+        int relevanceInBody;
+        int relevanceInUrl;
+        int relevanceInTitle;
+        int relevanceTotal;
     };
 
     class TextStore
@@ -54,8 +57,9 @@ namespace Trokam
              **/
             void show(const int &value= 10);
 
-            void setRelevance(const int &total);
-
+            void setRelevance(const int &total,
+                              const std::string &title,
+                              const std::string &url);
             int size() const;
 
             TextOcc get(const int &id) const;
@@ -65,10 +69,9 @@ namespace Trokam
             bool sorted;
             std::vector<TextOcc> textCollection;
 
-            /**
-             * Sort descendently by occurrence.
-             **/
-            void sort();
+            // void sort();
+            void sortRelevanceBody();
+            void sortRelevanceTotal();
     };
 }
 
