@@ -331,4 +331,12 @@ void Trokam::TextProcessing::removeUglyChars(std::string &text)
     boost::replace_all(text, "\n", " ");
     boost::replace_all(text, "\r", " ");
     boost::replace_all(text, "\t", " ");
+
+    /**
+     * Remove excessive white space.
+     **/
+    boost::replace_all(text, "          ", " ");
+    boost::replace_all(text, "     ", " ");
+    boost::replace_all(text, "   ", " ");
+    boost::replace_all(text, "  ", " ");
 }

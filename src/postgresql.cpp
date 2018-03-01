@@ -53,8 +53,6 @@ Trokam::Postgresql::Postgresql(const Trokam::Options &value)
         connParameters+= "password=" + value.dbPass() + " ";
     }
 
-    // std::cout << "connecting parameters: " << connParameters << "\n";
-
     try
     {
         dbConnection= new pqxx::connection(connParameters);
