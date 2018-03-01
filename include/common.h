@@ -38,6 +38,7 @@ const int SEQUENCE_SIZE =             5;
 const int WORDS_LIMIT =            5000;
 const int TEXT_LIMIT =    4*WORDS_LIMIT;
 const int RELEVANCE_THRESHOLD=      100;
+const int URL_LIMIT =               330;
 
 /**
  * String literals.

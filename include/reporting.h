@@ -30,6 +30,7 @@
 /// Trokam
 #include "options.h"
 #include "postgresql.h"
+#include "pageInfo.h"
 #include "pageProcessing.h"
 
 /**
@@ -49,7 +50,7 @@ namespace Trokam
                                const std::string &url,
                                const int &level);
 
-            void processingOutcome(const Trokam::PageInfo &info);
+            void processingOutcome(Trokam::PageInfo &info);
 
             void showSqlError(const pqxx::sql_error &error);
 

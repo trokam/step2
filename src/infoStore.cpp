@@ -33,6 +33,7 @@
 #include "fileOps.h"
 #include "infoStore.h"
 #include "reporting.h"
+#include "pageInfo.h"
 #include "pageProcessing.h"
 #include "textProcessing.h"
 #include "textStore.h"
@@ -133,7 +134,8 @@ void Trokam::InfoStore::insertPage(const int &index,
     insertSequenceOccurrence(info.sequences);
     updateSequenceOccurrence(info.sequences);
     insertTraits(index, info);
-    insertUrls(info.links, level+1);
+    // insertUrls(info.links, level+1);
+    insertUrls(info.urlBag, level+1);
     savePageContent(index, info.content);
     setCrunched(index, info);
 }
@@ -264,6 +266,21 @@ void Trokam::InfoStore::insertUrls(const std::string &links,
             insertPage(line, level);
         }
     }
+}
+
+void Trokam::InfoStore::insertUrls(const Trokam::DifferentStrings &links,
+                                   const int &level)
+{
+    std::cout << "inserting urls ...";
+
+    int count= 0;
+    for(int i= 0; ((i<links.size()) && (i<URL_LIMIT)); i++)
+    {
+        insertPage(links.get(i), level);
+        count++;
+    }
+
+    std::cout << "inserted: " << count << " out of " << links.size() << "\n";
 }
 
 void Trokam::InfoStore::savePageContent(const int &index, const std::string &value)

@@ -43,12 +43,12 @@ void Trokam::Reporting::processingNow(const int &page,
               << "'" << std::endl;
 }
 
-void Trokam::Reporting::processingOutcome(const Trokam::PageInfo &info)
+void Trokam::Reporting::processingOutcome(Trokam::PageInfo &info)
 {
     std::cout << "page report\n"
               << "\tcontent length: " << info.content.length() << "\n"
               << "\tsequences: " << info.sequences.size() << "\n"
-              << "\tlinks body: " << info.links.length() << "\n"
+              << "\turls: " << info.urlBag.size() << "\n"
               << "\tcomplexity: " << info.complexity << "\n"
               << "\ttitle: '" << info.title << "'\n";
 }

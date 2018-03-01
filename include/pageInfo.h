@@ -21,35 +21,35 @@
  * along with Trokam. If not, see <http://www.gnu.org/licenses/>.
  **********************************************************************/
 
-#ifndef TROKAM_WEB_H
-#define TROKAM_WEB_H
+#ifndef TROKAM_PAGEINFO_H
+#define TROKAM_PAGEINFO_H
 
 /// C++
 #include <string>
 
 /// Trokam
-#include "options.h"
-#include "pageInfo.h"
-#include "pageProcessing.h"
+#include "differentStrings.h"
+#include "textStore.h"
 
-/**
- * \brief
- *
- **/
 namespace Trokam
 {
-    class Web
+    class PageInfo
     {
         public:
 
-            Web(const Trokam::Options &value);
+            PageInfo();
 
-            void fetch(const std::string &url,
-                             Trokam::PageInfo &info);
-
-        private:
-
-            Trokam::Options settings;
+            std::string url;
+            std::string raw;
+            std::string content;
+            std::string links;
+            std::string title;
+            std::string type;
+            int size;
+            float complexity;
+            Trokam::TextStore sequences;
+            Trokam::DifferentStrings urlBag;
     };
 }
-#endif  /// TROKAM_WEB_H
+
+#endif  /// TROKAM_PAGEINFO_H

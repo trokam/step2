@@ -29,6 +29,7 @@
 
 /// Trokam
 #include "options.h"
+#include "pageInfo.h"
 #include "textProcessing.h"
 
 /**
@@ -37,19 +38,6 @@
  **/
 namespace Trokam
 {
-    struct PageInfo
-    {
-        std::string url;
-        std::string raw;
-        std::string content;
-        std::string links;
-        std::string title;
-        std::string type;
-        int size;
-        float complexity;
-        Trokam::TextStore sequences;
-    };
-
     class PageProcessing
     {
         public:

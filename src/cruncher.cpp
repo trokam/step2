@@ -30,6 +30,7 @@
 /// Trokam
 #include "cruncher.h"
 #include "common.h"
+#include "pageInfo.h"
 #include "pageProcessing.h"
 #include "textStore.h"
 #include "web.h"
@@ -61,16 +62,12 @@ void Trokam::Cruncher::run()
             std::string url;
             int level;
             Trokam::PageInfo info;
-            info.size= 0;
-            info.complexity= 0.0;
 
             /**
              * Get an URL from the database and report.
              **/
             storage.getUrlForProcessing(index, url, level);
             msg.processingNow(pages, index, url, level);
-
-
             info.url= url;
 
             /**

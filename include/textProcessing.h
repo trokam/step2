@@ -31,6 +31,7 @@
 #include <boost/scoped_ptr.hpp>
 
 /// Trokam
+#include "differentStrings.h"
 #include "textStore.h"
 
 namespace Trokam
@@ -40,10 +41,16 @@ namespace Trokam
         public:
 
             /**
-             * Extract the sequences of text.
+             * Extract the sequences from text and put them into bag.
              **/
             static int extractSequences(std::string &content,
-                                         Trokam::TextStore &bag);
+                                        Trokam::TextStore &bag);
+
+            /**
+             * Extract the URLS from text and put them into bag.
+             **/
+            static void extractURLs(const std::string &text,
+                                          Trokam::DifferentStrings &bag);
 
             static int relevance(const std::string &block,
                                  const std::string &piece);

@@ -30,9 +30,6 @@
 #include "textStore.h"
 #include "differentStrings.h"
 
-Trokam::DifferentStrings::DifferentStrings()
-{}
-
 void Trokam::DifferentStrings::insert(const std::string &text)
 {
     /**

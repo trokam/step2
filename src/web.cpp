@@ -29,6 +29,7 @@
 #include "common.h"
 #include "fileOps.h"
 #include "options.h"
+#include "textProcessing.h"
 #include "web.h"
 
 Trokam::Web::Web(const Trokam::Options &value): settings(value)
@@ -93,6 +94,13 @@ void Trokam::Web::fetch(const std::string &url,
         if(status==0)
         {
             Trokam::FileOps::read(linksFile, info.links);
+
+            /*
+            std::string links;
+            Trokam::FileOps::read(linksFile, links);
+            Trokam::TextProcessing::extractURLs(links, info.urlBag);
+            info.urlBag.show(20);
+            */
         }
         else
         {

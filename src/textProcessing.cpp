@@ -98,6 +98,69 @@ int Trokam::TextProcessing::extractSequences(std::string &content,
     return textLength;
 }
 
+void Trokam::TextProcessing::extractURLs(const std::string &text,
+                                              Trokam::DifferentStrings &bag)
+{
+    std::istringstream input(text);
+    for(std::string line; std::getline(input, line);)
+    {
+        /**
+         * Trimming unwanted characters.
+         **/
+        boost::algorithm::trim_if(line, boost::algorithm::is_any_of(" \n\r\""));
+
+        /**
+         * Must be within a minimum and maximun length.
+         **/
+        if((line.length() < 10) || (500 < line.length()))
+        {
+            continue;
+        }
+
+        /**
+         * URL that include a single quote is rejected.
+         **/
+        std::size_t loc= line.find('\'');
+        if(loc != std::string::npos)
+        {
+            continue;
+        }
+
+        /**
+         * URL that include a single a '#' is rejected.
+         **/
+        loc= line.find('#');
+        if(loc != std::string::npos)
+        {
+            continue;
+        }
+
+        /**
+         * Reject type not yet supported.
+         **/
+        const int len= line.length();
+        std::string last4= line.substr(len-4, len-1);
+        boost::algorithm::to_lower(last4);
+        if((last4 == ".pdf") || (last4 == ".xml"))
+        {
+            continue;
+        }
+
+        /**
+         * Verify that it starts with http or https.
+         **/
+        const std::string first7= line.substr(0, 7);
+        const std::string first8= line.substr(0, 8);
+
+        /**
+         * Only 'http' and 'https' protocols accepted.
+         **/
+        if((first7==HTTP) || (first8==HTTPS))
+        {
+            bag.insert(line);
+        }
+    }
+}
 
 int Trokam::TextProcessing::relevance(const std::string &block,
                                       const std::string &piece)

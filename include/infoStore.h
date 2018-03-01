@@ -83,6 +83,9 @@ namespace Trokam
             void insertUrls(const std::string &links,
                             const int &level);
 
+            void insertUrls(const Trokam::DifferentStrings &links,
+                            const int &level);
+
             void deleteSeqOccOfPage(const int &pageIndex);
 
             std::string generateSentenceOccInPage(const int &pageIndex,

@@ -26,7 +26,7 @@
 
 /// Trokam
 #include "common.h"
-#include "pageProcessing.h"
+#include "pageInfo.h"
 #include "reporting.h"
 #include "textProcessing.h"
 #include "textStore.h"
@@ -35,9 +35,10 @@ void Trokam::PageProcessing::extractPageInfo(Trokam::PageInfo &info)
 {
     Trokam::TextProcessing::extractTitle(info.raw, info.title);
     const int textLength= Trokam::TextProcessing::extractSequences(info.content, info.sequences);
+    Trokam::TextProcessing::extractURLs(info.links, info.urlBag);
     computeComplexity(info);
     info.sequences.setRelevance(textLength, info.title, info.url);
-    info.sequences.show(15);
+    info.sequences.show(5);
 }
 
 

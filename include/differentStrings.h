@@ -38,7 +38,6 @@ namespace Trokam
     {
         public:
 
-            DifferentStrings();
             void insert(const std::string &text);
             void show(const int &value);
             int size() const;

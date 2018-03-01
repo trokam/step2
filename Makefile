@@ -55,6 +55,7 @@ SOURCES_CRUNCHER= src/mainCruncher.cpp \
                   src/fileOps.cpp \
                   src/infoStore.cpp \
                   src/options.cpp \
+                  src/pageInfo.cpp \
                   src/pageProcessing.cpp \
                   src/postgresql.cpp \
                   src/reporting.cpp \
@@ -70,6 +71,7 @@ SOURCES_INITIALISER= src/mainInitialiser.cpp \
                      src/infoStore.cpp \
                      src/initialiser.cpp \
                      src/options.cpp \
+                     src/pageInfo.cpp \
                      src/pageProcessing.cpp \
                      src/postgresql.cpp \
 					 src/reporting.cpp \
@@ -84,6 +86,7 @@ SOURCES_WEBSEARCH= src/mainWebSearch.cpp \
                    src/fileOps.cpp \
                    src/infoStore.cpp \
                    src/options.cpp \
+                   src/pageInfo.cpp \
                    src/postgresql.cpp \
                    src/reporting.cpp \
                    src/sharedResources.cpp \
