@@ -39,6 +39,9 @@ const int WORDS_LIMIT =            5000;
 const int TEXT_LIMIT =    4*WORDS_LIMIT;
 const int RELEVANCE_THRESHOLD=      100;
 const int URL_LIMIT =               330;
+const int DOMAIN_NO_INSERT =          0;
+const int DOMAIN_INSERT_SAME =        1;
+const int DOMAIN_INSERT_ALL =         2;
 
 /**
  * String literals.

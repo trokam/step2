@@ -52,6 +52,7 @@ BIN=./bin
 SOURCES_CRUNCHER= src/mainCruncher.cpp \
                   src/cruncher.cpp \
                   src/differentStrings.cpp \
+                  src/exception.cpp \
                   src/fileOps.cpp \
                   src/infoStore.cpp \
                   src/options.cpp \
@@ -67,6 +68,7 @@ OBJECTS_CRUNCHER=$(SOURCES_CRUNCHER:.cpp=.o)
 
 SOURCES_INITIALISER= src/mainInitialiser.cpp \
                      src/differentStrings.cpp \
+                     src/exception.cpp \
                      src/fileOps.cpp \
                      src/infoStore.cpp \
                      src/initialiser.cpp \
@@ -83,6 +85,7 @@ OBJECTS_INITIALISER=$(SOURCES_INITIALISER:.cpp=.o)
 SOURCES_WEBSEARCH= src/mainWebSearch.cpp \
                    src/appGenerator.cpp \
                    src/differentStrings.cpp \
+                   src/exception.cpp \
                    src/fileOps.cpp \
                    src/infoStore.cpp \
                    src/options.cpp \

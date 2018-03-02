@@ -38,8 +38,13 @@ namespace Trokam
         public:
 
             PageInfo();
+            PageInfo(const PageInfo &value);
+            PageInfo& operator= (const PageInfo &value);
 
+            int index;
             std::string url;
+            int domainIndex;
+            int domainType;
             std::string raw;
             std::string content;
             std::string links;

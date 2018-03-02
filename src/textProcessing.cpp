@@ -141,7 +141,10 @@ void Trokam::TextProcessing::extractURLs(const std::string &text,
         const int len= line.length();
         std::string last4= line.substr(len-4, len-1);
         boost::algorithm::to_lower(last4);
-        if((last4 == ".pdf") || (last4 == ".xml"))
+        if((last4 == ".pdf") ||
+           (last4 == ".xml") ||
+           (last4 == ".rss") ||
+           (last4 == ".zip"))
         {
             continue;
         }

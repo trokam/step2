@@ -21,41 +21,35 @@
  * along with Trokam. If not, see <http://www.gnu.org/licenses/>.
  **********************************************************************/
 
-#ifndef TROKAM_CRUNCHER_H
-#define TROKAM_CRUNCHER_H
+#ifndef TROKAM_EXCEPTION_H
+#define TROKAM_EXCEPTION_H
 
 /// C++
 #include <string>
 
 /// Trokam
-#include "infoStore.h"
-#include "options.h"
-#include "reporting.h"
+#include "pageInfo.h"
+#include "common.h"
 
-/**
- * \brief Cruncher extract information of web pages and local files.
- *
- **/
 namespace Trokam
 {
-    class Cruncher
+    class Exception
     {
         public:
 
-            Cruncher(const Trokam::Options &value);
+            Exception(const int &errorId);
 
-            void run();
+            Exception(const int &errorId,
+                      const Trokam::PageInfo &value);
+
+            int getError() const;
+            int getIndex() const;
 
         private:
 
-            // int index;
-
-            Trokam::Options settings;
-            Trokam::InfoStore storage;
-            Trokam::Reporting msg;
-
-            void action(const int &index,
-                        const int &error);
+            int error;
+            Trokam::PageInfo page;
     };
 }
-#endif  /// TROKAM_CRUNCHER_H
+
+#endif  /// TROKAM_EXCEPTION_H

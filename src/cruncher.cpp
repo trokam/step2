@@ -30,6 +30,7 @@
 /// Trokam
 #include "cruncher.h"
 #include "common.h"
+#include "exception.h"
 #include "pageInfo.h"
 #include "pageProcessing.h"
 #include "textStore.h"
@@ -38,9 +39,7 @@
 Trokam::Cruncher::Cruncher(const Trokam::Options &value): settings(value),
                                                           storage(settings),
                                                           msg(settings)
-{
-    index= -1;
-}
+{}
 
 void Trokam::Cruncher::run()
 {
@@ -59,22 +58,20 @@ void Trokam::Cruncher::run()
             /**
              * Clean variables for every processing page.
              **/
-            std::string url;
             int level;
             Trokam::PageInfo info;
 
             /**
              * Get an URL from the database and report.
              **/
-            storage.getUrlForProcessing(index, url, level);
-            msg.processingNow(pages, index, url, level);
-            info.url= url;
+            storage.getUrlForProcessing(info, level);
+            msg.processingNow(pages, info.index, info.url, level);
 
             /**
              * Fetch the URL content.
              **/
             Trokam::Web w(settings);
-            w.fetch(url, info);
+            w.fetch(info.url, info);
 
             /**
              * Extract page information.
@@ -86,12 +83,13 @@ void Trokam::Cruncher::run()
              * insert its information in the store.
              **/
             msg.processingOutcome(info);
-            storage.insertPage(index, level, info);
+            storage.insertPage(info.index, level, info);
         }
-        catch(const int &e)
+        // catch(const int &e)
+        catch(const Trokam::Exception &e)
         {
-            Trokam::Reporting::showGeneralError(e);
-            action(index, e);
+            Trokam::Reporting::showGeneralError(e.getError());
+            action(e.getIndex(), e.getError());
         }
     }
 }

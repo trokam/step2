@@ -54,6 +54,9 @@ namespace Trokam
                                      std::string &url,
                                      int &level);
 
+            void getUrlForProcessing(Trokam::PageInfo &page,
+                                     int &level);
+
             bool insertPage(const std::string &url,
                             const int &level);
 
@@ -70,6 +73,8 @@ namespace Trokam
             Trokam::Postgresql db;
             Trokam::Reporting msg;
 
+            int getDomainIndex(const std::string &domain);
+
             void insertSequences(const int &index,
                                  const Trokam::TextStore &bag);
 
@@ -84,6 +89,9 @@ namespace Trokam
                             const int &level);
 
             void insertUrls(const Trokam::DifferentStrings &links,
+                            const int &level);
+
+            void insertUrls(const Trokam::PageInfo &page,
                             const int &level);
 
             void deleteSeqOccOfPage(const int &pageIndex);

@@ -32,14 +32,13 @@ ALTER TABLE public.sequence OWNER TO postgres;
 CREATE TABLE public.page(
 	index serial NOT NULL,
 	protocol varchar(10),
-	domain varchar(250),
+	index_domain integer,
 	path varchar(1000),
 	level integer NOT NULL,
 	processing bool NOT NULL,
 	crunched date NOT NULL,
 	state smallint NOT NULL,
-	CONSTRAINT page_pkey PRIMARY KEY (index),
-	CONSTRAINT page_unique UNIQUE (protocol,domain,path)
+	CONSTRAINT page_pkey PRIMARY KEY (index)
 
 );
 -- ddl-end --
@@ -152,6 +151,32 @@ ALTER TABLE public.page_seq ADD CONSTRAINT unique_page_text UNIQUE (index_page,i
 -- object: unique_seq_occ | type: CONSTRAINT --
 -- ALTER TABLE public.seq_occ DROP CONSTRAINT IF EXISTS unique_seq_occ CASCADE;
 ALTER TABLE public.seq_occ ADD CONSTRAINT unique_seq_occ UNIQUE (index_sequence,index_period);
+-- ddl-end --
+
+-- object: public.domain | type: TABLE --
+-- DROP TABLE IF EXISTS public.domain CASCADE;
+CREATE TABLE public.domain(
+	index serial NOT NULL,
+	value varchar(250) NOT NULL,
+	type smallint NOT NULL,
+	CONSTRAINT domain_pkey PRIMARY KEY (index),
+	CONSTRAINT domain_unique UNIQUE (value)
+
+);
+-- ddl-end --
+ALTER TABLE public.domain OWNER TO postgres;
+-- ddl-end --
+
+-- object: domain_fk | type: CONSTRAINT --
+-- ALTER TABLE public.page DROP CONSTRAINT IF EXISTS domain_fk CASCADE;
+ALTER TABLE public.page ADD CONSTRAINT domain_fk FOREIGN KEY (index_domain)
+REFERENCES public.domain (index) MATCH FULL
+ON DELETE SET NULL ON UPDATE CASCADE;
+-- ddl-end --
+
+-- object: page_unique | type: CONSTRAINT --
+-- ALTER TABLE public.page DROP CONSTRAINT IF EXISTS page_unique CASCADE;
+ALTER TABLE public.page ADD CONSTRAINT page_unique UNIQUE (protocol,index_domain,path);
 -- ddl-end --
 
 

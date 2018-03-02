@@ -3,7 +3,7 @@
 CAUTION: Do not modify this file unless you know what you are doing.
          Unexpected results may occur if the code is changed deliberately.
 -->
-<dbmodel pgmodeler-ver="0.8.1" last-position="0,0" last-zoom="1"
+<dbmodel pgmodeler-ver="0.8.1" last-position="0,2" last-zoom="1"
 	 default-schema="public" default-owner="postgres">
 <database name="new_database">
 </database>
@@ -39,9 +39,6 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	<column name="protocol">
 		<type name="varchar" length="10"/>
 	</column>
-	<column name="domain">
-		<type name="varchar" length="250"/>
-	</column>
 	<column name="path">
 		<type name="varchar" length="1000"/>
 	</column>
@@ -60,9 +57,14 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	<constraint name="page_pkey" type="pk-constr" table="public.page">
 		<columns names="index" ref-type="src-columns"/>
 	</constraint>
-	<constraint name="page_unique" type="uq-constr" table="public.page">
-		<columns names="protocol,domain,path" ref-type="src-columns"/>
-	</constraint>
+
+	<customidxs object-type="column">
+		<object name="index_domain" index="2"/>
+	</customidxs>
+
+	<customidxs object-type="constraint">
+		<object name="domain_fk" index="1"/>
+	</customidxs>
 </table>
 
 <table name="page_seq">
@@ -120,9 +122,6 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	 src-table="public.sequence"
 	 dst-table="public.page_seq"
 	 src-required="false" dst-required="false">
-	<line>
-		<position x="230.559" y="230.1"/>
-	</line>
 	<label ref-type="src-label">
 		<position x="6.13187" y="2.8"/>
 	</label>
@@ -207,11 +206,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	 custom-color="#753b24"
 	 src-table="public.sequence"
 	 dst-table="public.seq_occ"
-	 src-required="false" dst-required="false">
-	<line>
-		<position x="230.559" y="451.1"/>
-	</line>
-</relationship>
+	 src-required="false" dst-required="false"/>
 
 <relationship name="period_has_many_seq_occ" type="rel1n"
 	 src-col-pattern="{sc}_{st}"
@@ -220,12 +215,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	 custom-color="#cec351"
 	 src-table="public.period"
 	 dst-table="public.seq_occ"
-	 src-required="false" dst-required="false">
-	<line>
-		<position x="555.373" y="381.1"/>
-	<position x="555.373" y="464.1"/>
-	</line>
-</relationship>
+	 src-required="false" dst-required="false"/>
 
 <relationship name="period_has_many_page_seq" type="rel1n"
 	 src-col-pattern="{sc}_{st}"
@@ -234,12 +224,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	 custom-color="#0538df"
 	 src-table="public.period"
 	 dst-table="public.page_seq"
-	 src-required="false" dst-required="false">
-	<line>
-		<position x="562.006" y="381.1"/>
-	<position x="562.006" y="243.1"/>
-	</line>
-</relationship>
+	 src-required="false" dst-required="false"/>
 
 <constraint name="unique_page_text" type="uq-constr" table="public.page_seq">
 	<columns names="index_page,index_sequence,index_period" ref-type="src-columns"/>
@@ -247,6 +232,45 @@ CAUTION: Do not modify this file unless you know what you are doing.
 
 <constraint name="unique_seq_occ" type="uq-constr" table="public.seq_occ">
 	<columns names="index_sequence,index_period" ref-type="src-columns"/>
+</constraint>
+
+<table name="domain">
+	<schema name="public"/>
+	<role name="postgres"/>
+	<position x="913" y="27"/>
+	<column name="index" not-null="true">
+		<type name="serial"/>
+	</column>
+	<column name="value" not-null="true">
+		<type name="varchar" length="250"/>
+	</column>
+	<column name="type" not-null="true">
+		<type name="smallint"/>
+	</column>
+	<constraint name="domain_pkey" type="pk-constr" table="public.domain">
+		<columns names="index" ref-type="src-columns"/>
+	</constraint>
+	<constraint name="domain_unique" type="uq-constr" table="public.domain">
+		<columns names="value" ref-type="src-columns"/>
+	</constraint>
+</table>
+
+<relationship name="domain_has_many_page" type="rel1n"
+	 src-col-pattern="{sc}_{st}"
+	 pk-pattern="{dt}_pk" uq-pattern="{dt}_uq"
+	 src-fk-pattern="{st}_fk"
+	 custom-color="#af9e77"
+	 src-table="public.domain"
+	 dst-table="public.page"
+	 src-required="false" dst-required="false">
+	<line>
+		<position x="884.186" y="54.1"/>
+	<position x="884.186" y="152.1"/>
+	</line>
+</relationship>
+
+<constraint name="page_unique" type="uq-constr" table="public.page">
+	<columns names="protocol,index_domain,path" ref-type="src-columns"/>
 </constraint>
 
 </dbmodel>

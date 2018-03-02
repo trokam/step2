@@ -27,6 +27,7 @@
 
 /// Trokam
 #include "common.h"
+#include "exception.h"
 #include "postgresql.h"
 
 Trokam::Postgresql::Postgresql(const Trokam::Options &value)
@@ -64,7 +65,7 @@ Trokam::Postgresql::Postgresql(const Trokam::Options &value)
     catch(const std::exception &e)
     {
         std::cerr << "Exception: " << e.what() << std::endl;
-        throw COULD_NOT_CONNECT_TO_DATABASE;
+        throw Trokam::Exception(COULD_NOT_CONNECT_TO_DATABASE);
     }
 }
 

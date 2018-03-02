@@ -27,6 +27,7 @@
 
 /// Trokam
 #include "common.h"
+#include "exception.h"
 #include "fileOps.h"
 #include "options.h"
 #include "textProcessing.h"
@@ -62,7 +63,7 @@ void Trokam::Web::fetch(const std::string &url,
     status= system(command.c_str());
     if(status!=0)
     {
-        throw DOWNLOAD_FAIL;
+        throw Trokam::Exception(DOWNLOAD_FAIL, info);
     }
 
     std::string type= Trokam::FileOps::type(rawFile);
@@ -83,7 +84,7 @@ void Trokam::Web::fetch(const std::string &url,
         }
         else
         {
-            throw EXTRACTING_CONTENT_FAIL;
+            throw Trokam::Exception(EXTRACTING_CONTENT_FAIL, info);
         }
 
         /**
@@ -104,11 +105,11 @@ void Trokam::Web::fetch(const std::string &url,
         }
         else
         {
-            throw EXTRACTING_LINKS_FAIL;
+            throw Trokam::Exception(EXTRACTING_LINKS_FAIL, info);
         }
     }
     else
     {
-        throw TYPE_NOT_SUPPORTED;
+        throw Trokam::Exception(TYPE_NOT_SUPPORTED, info);
     }
 }

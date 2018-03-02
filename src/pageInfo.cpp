@@ -23,9 +23,66 @@
 
 /// Trokam
 #include "pageInfo.h"
+#include "common.h"
 
 Trokam::PageInfo::PageInfo()
 {
+    index= -1;
+    domainIndex= -1;
+    domainType= DOMAIN_NO_INSERT;
     size= 0;
     complexity= 0.0;
+}
+
+Trokam::PageInfo::PageInfo(const Trokam::PageInfo &value)
+{
+    index= value.index;
+    url= value.url;
+    domainIndex= value.domainIndex;
+    domainType= value.domainType;
+    raw= value.raw;
+    content= value.content;
+    links= value.links;
+    title= value.title;
+    type= value.type;
+    size= value.size;
+    complexity= value.complexity;
+    sequences= value.sequences;
+    urlBag= value.urlBag;
+}
+
+/**
+ * Copy constructor.
+ **/
+Trokam::PageInfo& Trokam::PageInfo::operator= (const Trokam::PageInfo &value)
+{
+    /**
+     * Avoid self-assignment.
+     */
+    if(this == &value)
+    {
+        return *this;
+    }
+
+    /**
+     * Copy data.
+     */
+    index= value.index;
+    url= value.url;
+    domainIndex= value.domainIndex;
+    domainType= value.domainType;
+    raw= value.raw;
+    content= value.content;
+    links= value.links;
+    title= value.title;
+    type= value.type;
+    size= value.size;
+    complexity= value.complexity;
+    sequences= value.sequences;
+    urlBag= value.urlBag;
+
+    /**
+     * Return 'this' object.
+     */
+    return *this;
 }
