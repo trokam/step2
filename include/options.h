@@ -46,6 +46,12 @@ namespace Trokam
             std::string dbName() const;
             std::string dbUser() const;
             std::string dbPass() const;
+
+            std::string controlHost() const;
+            std::string controlName() const;
+            std::string controlUser() const;
+            std::string controlPass() const;
+
             std::string workingDir() const;
             std::string seedsFile() const;
             std::string contentDir() const;
@@ -55,10 +61,17 @@ namespace Trokam
             void deleteWorkingDirectory();
 
         private:
+
             std::string optDbHost;
             std::string optDbName;
             std::string optDbUser;
             std::string optDbPass;
+
+            std::string optControlHost;
+            std::string optControlName;
+            std::string optControlUser;
+            std::string optControlPass;
+
             std::string optWorkingDir;
             std::string optSeedsFile;
             std::string optContentDir;

@@ -39,7 +39,9 @@
 #include "textProcessing.h"
 #include "textStore.h"
 
-Trokam::InfoStore::InfoStore(const Trokam::Options &value): settings(value), db(value), msg(value)
+Trokam::InfoStore::InfoStore(const Trokam::Options &value): settings(value),
+                                                            db(value, DB_TEXT_SEARCH),
+                                                            msg(value)
 {}
 
 void Trokam::InfoStore::getUrlForProcessing(int &index,

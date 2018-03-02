@@ -23,12 +23,15 @@
 
 /// C++
 #include <iostream>
+#include <chrono>
+#include <thread>
 
 /// Boost
 #include <boost/scoped_ptr.hpp>
 
 /// Trokam
 #include "cruncher.h"
+#include "control.h"
 #include "common.h"
 #include "exception.h"
 #include "pageInfo.h"
@@ -39,58 +42,83 @@
 Trokam::Cruncher::Cruncher(const Trokam::Options &value): settings(value),
                                                           storage(settings),
                                                           msg(settings)
-{}
+{
+    count= 0;
+}
 
 void Trokam::Cruncher::run()
 {
-    int pages= 0;
+    Trokam::Control control(settings);
 
-    while(pages < settings.pagesLimit())
+    if(settings.pagesLimit() != 0)
     {
-        try
+        while(count < settings.pagesLimit())
         {
-            /**
-             * Page counter is incremented at the begining because
-             * the attempt to process a page is taken into the count.
-             **/
-            pages++;
-
-            /**
-             * Clean variables for every processing page.
-             **/
-            int level;
-            Trokam::PageInfo info;
-
-            /**
-             * Get an URL from the database and report.
-             **/
-            storage.getUrlForProcessing(info, level);
-            msg.processingNow(pages, info.index, info.url, level);
-
-            /**
-             * Fetch the URL content.
-             **/
-            Trokam::Web w(settings);
-            w.fetch(info.url, info);
-
-            /**
-             * Extract page information.
-             **/
-            Trokam::PageProcessing::extractPageInfo(info);
-
-            /**
-             * Report on the page just processed and
-             * insert its information in the store.
-             **/
-            msg.processingOutcome(info);
-            storage.insertPage(info.index, level, info);
+            process();
         }
-        // catch(const int &e)
-        catch(const Trokam::Exception &e)
+    }
+    else
+    {
+        while(control.run())
         {
-            Trokam::Reporting::showGeneralError(e.getError());
-            action(e.getIndex(), e.getError());
+            if(control.active())
+            {
+                process();
+            }
+            else
+            {
+                std::cout << "pause ..." << std::endl;
+                std::this_thread::sleep_for(std::chrono::seconds(5));
+            }
         }
+        std::cout << "commanded to exit ..." << std::endl;
+    }
+}
+
+void Trokam::Cruncher::process()
+{
+    try
+    {
+        /**
+         * Page counter is incremented at the begining because
+         * the attempt to process a page is taken into the count.
+         **/
+        count++;
+
+        /**
+         * Clean variables for every processing page.
+         **/
+        int level;
+        Trokam::PageInfo info;
+
+        /**
+         * Get an URL from the database and report.
+         **/
+        storage.getUrlForProcessing(info, level);
+        msg.processingNow(count, info.index, info.url, level);
+
+        /**
+         * Fetch the URL content.
+         **/
+        Trokam::Web w(settings);
+        w.fetch(info.url, info);
+
+        /**
+         * Extract page information.
+         **/
+        Trokam::PageProcessing::extractPageInfo(info);
+
+        /**
+         * Report on the page just processed and
+         * insert its information in the store.
+         **/
+        msg.processingOutcome(info);
+        storage.insertPage(info.index, level, info);
+    }
+    catch(const Trokam::Exception &e)
+    {
+        Trokam::Reporting::showGeneralError(e.getError());
+        action(e.getIndex(), e.getError());
     }
 }
 

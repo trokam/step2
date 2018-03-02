@@ -51,6 +51,7 @@ BIN=./bin
 
 SOURCES_CRUNCHER= src/mainCruncher.cpp \
                   src/cruncher.cpp \
+                  src/control.cpp \
                   src/differentStrings.cpp \
                   src/exception.cpp \
                   src/fileOps.cpp \

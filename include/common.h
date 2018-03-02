@@ -44,6 +44,13 @@ const int DOMAIN_INSERT_SAME =        1;
 const int DOMAIN_INSERT_ALL =         2;
 
 /**
+ * Database IDs.
+ **/
+
+const int DB_TEXT_SEARCH =            7;
+const int DB_CONTROL =               11;
+
+/**
  * String literals.
  **/
 

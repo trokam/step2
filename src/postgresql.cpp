@@ -30,29 +30,58 @@
 #include "exception.h"
 #include "postgresql.h"
 
-Trokam::Postgresql::Postgresql(const Trokam::Options &value)
+Trokam::Postgresql::Postgresql(const Trokam::Options &value,
+                               const int &id)
 {
     std::string connParameters;
 
-    if(value.dbHost() != "")
+    if(id == DB_TEXT_SEARCH)
     {
-        connParameters+= "host=" + value.dbHost() + " ";
+        if(value.dbHost() != "")
+        {
+            connParameters+= "host=" + value.dbHost() + " ";
+        }
+
+        if(value.dbName() != "")
+        {
+            connParameters+= "dbname=" + value.dbName() + " ";
+        }
+
+        if(value.dbUser() != "")
+        {
+            connParameters+= "user=" + value.dbUser() + " ";
+        }
+
+        if(value.dbPass() != "")
+        {
+            connParameters+= "password=" + value.dbPass() + " ";
+        }
     }
 
-    if(value.dbName() != "")
+    if(id == DB_CONTROL)
     {
-        connParameters+= "dbname=" + value.dbName() + " ";
+        if(value.dbHost() != "")
+        {
+            connParameters+= "host=" + value.controlHost() + " ";
+        }
+
+        if(value.dbName() != "")
+        {
+            connParameters+= "dbname=" + value.controlName() + " ";
+        }
+
+        if(value.dbUser() != "")
+        {
+            connParameters+= "user=" + value.controlUser() + " ";
+        }
+
+        if(value.dbPass() != "")
+        {
+            connParameters+= "password=" + value.controlPass() + " ";
+        }
     }
 
-    if(value.dbUser() != "")
-    {
-        connParameters+= "user=" + value.dbUser() + " ";
-    }
-
-    if(value.dbPass() != "")
-    {
-        connParameters+= "password=" + value.dbPass() + " ";
-    }
+    std::cout << "connection parameters: " << connParameters << "\n";
 
     try
     {
@@ -203,5 +232,14 @@ void Trokam::Postgresql::extract(const boost::scoped_ptr<pqxx::result> &answer, 
     if(col != answer->end())
     {
         value= col[0].as(int());
+    }
+}
+
+void Trokam::Postgresql::extract(const boost::scoped_ptr<pqxx::result> &answer, bool &value)
+{
+    const pqxx::result::const_iterator col= answer->begin();
+    if(col != answer->end())
+    {
+        value= col[0].as(bool());
     }
 }

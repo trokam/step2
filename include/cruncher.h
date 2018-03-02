@@ -48,11 +48,12 @@ namespace Trokam
 
         private:
 
-            // int index;
-
+            int count;
             Trokam::Options settings;
             Trokam::InfoStore storage;
             Trokam::Reporting msg;
+
+            void process();
 
             void action(const int &index,
                         const int &error);

@@ -21,54 +21,45 @@
  * along with Trokam. If not, see <http://www.gnu.org/licenses/>.
  **********************************************************************/
 
-#ifndef TROKAM_POSTGRESQL_H
-#define TROKAM_POSTGRESQL_H
-
 /// C++
 #include <string>
-#include <vector>
-
-/// Boost
-#include <boost/scoped_ptr.hpp>
-
-/// Postgresql
-#include <pqxx/pqxx>
+#include <iostream>
 
 /// Trokam
-#include "options.h"
+#include "common.h"
+#include "control.h"
 
-/**
- *
- **/
-namespace Trokam
+Trokam::Control::Control(const Trokam::Options &value): settings(value),
+                                                        db(value, DB_CONTROL),
+                                                        msg(value)
+{}
+
+bool Trokam::Control::run()
 {
-    class Postgresql
-    {
-        public:
+    bool state= false;
 
-            // Postgresql(const Trokam::Options &value);
-            Postgresql(const Trokam::Options &value,
-                       const int &id);
+    std::string sentence;
+    sentence=  "SELECT run ";
+    sentence+= "FROM command ";
 
-            ~Postgresql();
+    boost::scoped_ptr<pqxx::result> answer;
+    db.execSql(sentence, answer);
+    Trokam::Postgresql::extract(answer, state);
 
-            void execSql(const std::string &sentence);
-
-            void execSql(const std::string &sentence,
-                         boost::scoped_ptr<pqxx::result> &answer);
-
-            void execSql(std::vector<std::string> &bundle);
-
-            static void extract(const boost::scoped_ptr<pqxx::result> &answer,
-                                int &value);
-
-            static void extract(const boost::scoped_ptr<pqxx::result> &answer,
-                                bool &value);
-
-        private:
-
-            pqxx::connection *dbConnection;
-    };
+    return state;
 }
 
-#endif /// TROKAM_POSTGRESQL_H
+bool Trokam::Control::active()
+{
+    bool state= false;
+
+    std::string sentence;
+    sentence=  "SELECT active ";
+    sentence+= "FROM command ";
+
+    boost::scoped_ptr<pqxx::result> answer;
+    db.execSql(sentence, answer);
+    Trokam::Postgresql::extract(answer, state);
+
+    return state;
+}

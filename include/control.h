@@ -21,54 +21,36 @@
  * along with Trokam. If not, see <http://www.gnu.org/licenses/>.
  **********************************************************************/
 
-#ifndef TROKAM_POSTGRESQL_H
-#define TROKAM_POSTGRESQL_H
+#ifndef TROKAM_CONTROL_H
+#define TROKAM_CONTROL_H
 
 /// C++
 #include <string>
-#include <vector>
 
 /// Boost
 #include <boost/scoped_ptr.hpp>
 
-/// Postgresql
-#include <pqxx/pqxx>
-
 /// Trokam
+#include "reporting.h"
 #include "options.h"
+#include "postgresql.h"
 
-/**
- *
- **/
 namespace Trokam
 {
-    class Postgresql
+    class Control
     {
         public:
 
-            // Postgresql(const Trokam::Options &value);
-            Postgresql(const Trokam::Options &value,
-                       const int &id);
-
-            ~Postgresql();
-
-            void execSql(const std::string &sentence);
-
-            void execSql(const std::string &sentence,
-                         boost::scoped_ptr<pqxx::result> &answer);
-
-            void execSql(std::vector<std::string> &bundle);
-
-            static void extract(const boost::scoped_ptr<pqxx::result> &answer,
-                                int &value);
-
-            static void extract(const boost::scoped_ptr<pqxx::result> &answer,
-                                bool &value);
+            Control(const Trokam::Options &value);
+            bool run();
+            bool active();
 
         private:
 
-            pqxx::connection *dbConnection;
+            Trokam::Options settings;
+            Trokam::Postgresql db;
+            Trokam::Reporting msg;
     };
 }
 
-#endif /// TROKAM_POSTGRESQL_H
+#endif  /// TROKAM_INFOSTORE_H

@@ -47,7 +47,7 @@ Trokam::Options::Options()
 
 Trokam::Options::Options(int argc, const char* argv[])
 {
-    optPagesLimit= 1;
+    optPagesLimit= 0;
     optLevel= 0;
     createWorkingDirectory();
 
@@ -104,10 +104,17 @@ void Trokam::Options::readSettings(const std::string &filename)
     {
         boost::property_tree::ptree pt;
         boost::property_tree::ini_parser::read_ini(filename, pt);
+
         optDbHost= pt.get<std::string>("database.host");
         optDbName= pt.get<std::string>("database.name");
         optDbUser= pt.get<std::string>("database.user");
         optDbPass= pt.get<std::string>("database.pass");
+
+        optControlHost= pt.get<std::string>("control.host");
+        optControlName= pt.get<std::string>("control.name");
+        optControlUser= pt.get<std::string>("control.user");
+        optControlPass= pt.get<std::string>("control.pass");
+
         optContentDir= pt.get<std::string>("content.directory");
 
         std::cout << "content dir: " << optContentDir << "\n";
@@ -126,6 +133,12 @@ Trokam::Options::Options(const Trokam::Options &opt)
     optDbName= opt.dbName();
     optDbUser= opt.dbUser();
     optDbPass= opt.dbPass();
+
+    optControlHost= opt.controlHost();
+    optControlName= opt.controlName();
+    optControlUser= opt.controlUser();
+    optControlPass= opt.controlPass();
+
     optWorkingDir= opt.workingDir();
     optSeedsFile= opt.seedsFile();
     optContentDir= opt.contentDir();
@@ -153,6 +166,12 @@ Trokam::Options& Trokam::Options::operator= (const Trokam::Options &opt)
     optDbName= opt.dbName();
     optDbUser= opt.dbUser();
     optDbPass= opt.dbPass();
+
+    optControlHost= opt.controlHost();
+    optControlName= opt.controlName();
+    optControlUser= opt.controlUser();
+    optControlPass= opt.controlPass();
+
     optWorkingDir= opt.workingDir();
     optSeedsFile= opt.seedsFile();
     optContentDir= opt.contentDir();
@@ -183,6 +202,26 @@ std::string Trokam::Options::dbUser() const
 std::string Trokam::Options::dbPass() const
 {
     return optDbPass;
+}
+
+std::string Trokam::Options::controlHost() const
+{
+    return optControlHost;
+}
+
+std::string Trokam::Options::controlName() const
+{
+    return optControlName;
+}
+
+std::string Trokam::Options::controlUser() const
+{
+    return optControlUser;
+}
+
+std::string Trokam::Options::controlPass() const
+{
+    return optControlPass;
 }
 
 std::string Trokam::Options::workingDir() const
