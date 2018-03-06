@@ -81,8 +81,6 @@ Trokam::Postgresql::Postgresql(const Trokam::Options &value,
         }
     }
 
-    std::cout << "connection parameters: " << connParameters << "\n";
-
     try
     {
         dbConnection= new pqxx::connection(connParameters);

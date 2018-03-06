@@ -179,4 +179,14 @@ ON DELETE SET NULL ON UPDATE CASCADE;
 ALTER TABLE public.page ADD CONSTRAINT page_unique UNIQUE (protocol,index_domain,path);
 -- ddl-end --
 
+-- object: public.command | type: TABLE --
+-- DROP TABLE IF EXISTS public.command CASCADE;
+CREATE TABLE public.command(
+	run bool NOT NULL,
+	active bool NOT NULL
+);
+-- ddl-end --
+ALTER TABLE public.command OWNER TO postgres;
+-- ddl-end --
+
 
