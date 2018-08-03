@@ -1,6 +1,6 @@
 /***********************************************************************
  *                            T R O K A M
- *                         Fair Search Engine
+ *                       Internet Search Engine
  *
  * Copyright (C) 2018, Nicolas Slusarenko
  *                     nicolas.slusarenko@trokam.com
@@ -48,6 +48,7 @@ void Trokam::Web::fetch(const std::string &url,
     const std::string rawFile= settings.workingDir() + "/raw";
     const std::string contentFile= settings.workingDir() + "/content";
     const std::string linksFile= settings.workingDir() + "/links";
+    const std::string logFile= settings.workingDir() + "/log";
 
     /**
      * Deleting them if they exists.
@@ -55,21 +56,47 @@ void Trokam::Web::fetch(const std::string &url,
     Trokam::FileOps::rmFile(rawFile);
     Trokam::FileOps::rmFile(contentFile);
     Trokam::FileOps::rmFile(linksFile);
+    Trokam::FileOps::rmFile(logFile);
 
     /**
      * Download the web page and put it in a file.
      **/
-    command= "wget -q --timeout=10 --tries=1 -O " + rawFile + " -k \"" + url + "\"";
+    command= "wget -o " + logFile + " --header=\"User-Agent: Trokambot/1.0 (+http://trokam.com/bot.html)\" --timeout=20 --tries=1 --local-encoding=UTF8 -O " + rawFile + " -k \"" + url + "\"";
+
+    std::cout << "command: " << command << "\n";
+
     status= system(command.c_str());
     if(status!=0)
     {
         throw Trokam::Exception(DOWNLOAD_FAIL, info);
     }
 
-    std::string type= Trokam::FileOps::type(rawFile);
-    info.type= type.substr(0,9);
+    const std::string urlForwarded = Trokam::TextProcessing::extractLocation(logFile);
+    std::cout << "urlForwarded: '" << urlForwarded << "'\n";
+    info.urlForwarded = urlForwarded;
 
-    if(info.type == HTML)
+    std::string type= Trokam::FileOps::type(rawFile);
+    info.type= type.substr(0,8);
+    std::cout << "file type: " << type << "\n";
+
+    if (type.find("gzip") != std::string::npos)
+    {
+        std::string command;
+
+        command= "mv " + rawFile + " " + rawFile + ".gz";
+        std::cout << "command: " << command << "\n";
+        status= system(command.c_str());
+
+        command= "gunzip " + rawFile + ".gz";
+        std::cout << "command: " << command << "\n";
+        status= system(command.c_str());
+
+        std::string type= Trokam::FileOps::type(rawFile);
+        info.type= type.substr(0,8);
+        std::cout << "file type: " << type << "\n";
+    }
+
+    if ((info.type == HTML) || (info.type == XML))
     {
         Trokam::FileOps::read(rawFile, info.raw);
 
@@ -95,13 +122,6 @@ void Trokam::Web::fetch(const std::string &url,
         if(status==0)
         {
             Trokam::FileOps::read(linksFile, info.links);
-
-            /*
-            std::string links;
-            Trokam::FileOps::read(linksFile, links);
-            Trokam::TextProcessing::extractURLs(links, info.urlBag);
-            info.urlBag.show(20);
-            */
         }
         else
         {

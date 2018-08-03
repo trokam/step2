@@ -1,6 +1,6 @@
 /***********************************************************************
  *                            T R O K A M
- *                         Fair Search Engine
+ *                       Internet Search Engine
  *
  * Copyright (C) 2018, Nicolas Slusarenko
  *                     nicolas.slusarenko@trokam.com
@@ -42,7 +42,7 @@ bool Trokam::Control::run()
     sentence=  "SELECT run ";
     sentence+= "FROM command ";
 
-    boost::scoped_ptr<pqxx::result> answer;
+    pqxx::result answer;
     db.execSql(sentence, answer);
     Trokam::Postgresql::extract(answer, state);
 
@@ -57,7 +57,7 @@ bool Trokam::Control::active()
     sentence=  "SELECT active ";
     sentence+= "FROM command ";
 
-    boost::scoped_ptr<pqxx::result> answer;
+    pqxx::result answer;
     db.execSql(sentence, answer);
     Trokam::Postgresql::extract(answer, state);
 

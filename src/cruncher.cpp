@@ -1,6 +1,6 @@
 /***********************************************************************
  *                            T R O K A M
- *                         Fair Search Engine
+ *                       Internet Search Engine
  *
  * Copyright (C) 2018, Nicolas Slusarenko
  *                     nicolas.slusarenko@trokam.com
@@ -43,12 +43,40 @@ Trokam::Cruncher::Cruncher(const Trokam::Options &value): settings(value),
                                                           storage(settings),
                                                           msg(settings)
 {
+    level= 0;
     count= 0;
+
+    int PERIOD_SIZE = 0;
+
+    if (settings.cruncherType() == PAGE_CRUNCHER)
+    {
+        PERIOD_SIZE = 60 * 60 * 12;
+        std::cout << "this is a *** PAGE *** cruncher.\n";
+    }
+    else if (settings.cruncherType() == DOMAIN_CRUNCHER)
+    {
+        PERIOD_SIZE = 60 * 60 * 24 * 30;
+        std::cout << "this is a *** DOMAIN *** cruncher.\n";
+    }
+    else
+    {
+        std::cerr << "error: this machine is not meant to be used for crunching.\n";
+        exit(1);
+    }
+
+    int seconds= std::time(nullptr);
+    std::div_t d= div(seconds, PERIOD_SIZE);
+    periodBeginning = d.quot * PERIOD_SIZE;
+
+    std::cout << "seconds since 1970: " << seconds << "\n";
+    std::cout << "period beginning:   " << periodBeginning << "\n";
 }
 
-void Trokam::Cruncher::run()
+int Trokam::Cruncher::run()
 {
     Trokam::Control control(settings);
+
+    storage.setAllNotProcessing();
 
     if(settings.pagesLimit() != 0)
     {
@@ -56,6 +84,7 @@ void Trokam::Cruncher::run()
         {
             process();
         }
+        return 0;
     }
     else
     {
@@ -72,48 +101,78 @@ void Trokam::Cruncher::run()
             }
         }
         std::cout << "commanded to exit ..." << std::endl;
+        return 1;
     }
 }
 
 void Trokam::Cruncher::process()
 {
+    Trokam::Control control(settings);
+
     try
     {
         /**
-         * Page counter is incremented at the begining because
-         * the attempt to process a page is taken into the count.
-         **/
-        count++;
-
-        /**
-         * Clean variables for every processing page.
-         **/
-        int level;
-        Trokam::PageInfo info;
-
-        /**
          * Get an URL from the database and report.
          **/
-        storage.getUrlForProcessing(info, level);
-        msg.processingNow(count, info.index, info.url, level);
+        std::vector<Trokam::PageInfo> pages;
 
-        /**
-         * Fetch the URL content.
-         **/
-        Trokam::Web w(settings);
-        w.fetch(info.url, info);
+        if (storage.getUrlForProcessing(pages, level, periodBeginning))
+        {
+            for(size_t i=0; i<pages.size(); i++)
+            {
+                try
+                {
+                    Trokam::PageInfo info= pages[i];
 
-        /**
-         * Extract page information.
-         **/
-        Trokam::PageProcessing::extractPageInfo(info);
+                    /**
+                     * The attempt to process a page is taken into the count.
+                     **/
+                    count++;
 
-        /**
-         * Report on the page just processed and
-         * insert its information in the store.
-         **/
-        msg.processingOutcome(info);
-        storage.insertPage(info.index, level, info);
+                    msg.processingNow(count, info.index, info.urlOrigin, level);
+
+                    /**
+                     * Fetch the URL content.
+                     **/
+                    Trokam::Web w(settings);
+                    w.fetch(info.urlOrigin, info);
+
+                    /**
+                     * Extract page information.
+                     **/
+                    Trokam::PageProcessing::extractPageInfo(info);
+
+                    /**
+                     * Report on the page just processed and
+                     * insert its information in the store.
+                     **/
+                    msg.processingOutcome(info);
+                    storage.insertPage(info.index, level, info);
+
+                    std::cout << "done\n\n" << std::endl;
+                }
+                catch(const Trokam::Exception &e)
+                {
+                    Trokam::Reporting::showGeneralError(e.getError());
+                    action(e.getIndex(), e.getError());
+                }
+            }
+
+            if (control.run() == false)
+            {
+                std::cout << "commanded to exit ..." << std::endl;
+                exit(1);
+            }
+        }
+        else
+        {
+            std::cout << "no pages avaliable for crunching at level: " << level << "\n";
+            level++;
+            if (level > 5)
+            {
+                exit(0);
+            }
+        }
     }
     catch(const Trokam::Exception &e)
     {

@@ -1,6 +1,6 @@
 ########################################################################
 #                             T R O K A M
-#                          Fair Search Engine
+#                        Internet Search Engine
 #
 #  Copyright (C) 2018, Nicolas Slusarenko
 #                      nicolas.slusarenko@trokam.com
@@ -23,12 +23,14 @@
 
 CC=c++
 
-CPPFLAGS=-c -std=c++14 -Wall -Wcpp -O1 -I./include
+CPPFLAGS=-c -g -pg -std=c++14 -O2 -Wall -Wcpp -I./include \
+                                              -I/usr/local/include \
 
-LDFLAGS=-g
+LDFLAGS=-g -pg -pthread -L/usr/local/lib
 
 LDLIBS= -lboost_system \
         -lboost_program_options \
+        -lboost_serialization \
         -lpqxx \
         -lmagic
 
@@ -40,10 +42,14 @@ LDLIBS_WEB= -lboost_program_options \
             -lpqxx \
             -lmagic \
             -lwt \
-		    -lwthttp
-#       -lwtfcgi
+            -lwtfcgi
 
 BIN=./bin
+
+WEB_SERVER_BIN_DIR=/var/www/html/bin
+WEB_SERVER_APP_ROOT=/usr/local/etc
+WEB_SERVER_DOC_ROOT=/var/www/html
+WT_RUN_TIME=/usr/local/run/wt
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # source
@@ -83,7 +89,28 @@ SOURCES_INITIALISER= src/mainInitialiser.cpp \
 
 OBJECTS_INITIALISER=$(SOURCES_INITIALISER:.cpp=.o)
 
+SOURCES_FEEDER= src/mainFeeder.cpp \
+                src/differentStrings.cpp \
+                src/exception.cpp \
+                src/fileOps.cpp \
+                src/infoCopier.cpp \
+                src/feeder.cpp \
+                src/options.cpp \
+                src/pageInfo.cpp \
+                src/pageProcessing.cpp \
+                src/postgresql.cpp \
+                src/reporting.cpp \
+                src/textProcessing.cpp \
+                src/textStore.cpp
+
+OBJECTS_FEEDER=$(SOURCES_FEEDER:.cpp=.o)
+
 SOURCES_WEBSEARCH= src/mainWebSearch.cpp \
+                   src/searchWidget.cpp \
+                   src/aboutWidget.cpp \
+                   src/ackWidget.cpp \
+                   src/donWidget.cpp \
+                   src/pageWidget.cpp \
                    src/appGenerator.cpp \
                    src/differentStrings.cpp \
                    src/exception.cpp \
@@ -104,7 +131,7 @@ OBJECTS_WEBSEARCH=$(SOURCES_WEBSEARCH:.cpp=.o)
 # targets
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-all: cruncher initialiser websearch
+all: cruncher initialiser feeder search.wt
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # individual recipes
@@ -116,7 +143,10 @@ cruncher: $(OBJECTS_CRUNCHER)
 initialiser: $(OBJECTS_INITIALISER)
 	$(CC) $(LDFLAGS) $(OBJECTS_INITIALISER) -o $(BIN)/$@ $(LDLIBS)
 
-websearch: $(OBJECTS_WEBSEARCH)
+feeder: $(OBJECTS_FEEDER)
+	$(CC) $(LDFLAGS) $(OBJECTS_FEEDER) -o $(BIN)/$@ $(LDLIBS)
+
+search.wt: $(OBJECTS_WEBSEARCH)
 	$(CC) $(LDFLAGS) $(OBJECTS_WEBSEARCH) -o $(BIN)/$@ $(LDLIBS_WEB)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -132,6 +162,24 @@ include $(DEPENDENCIES:.cpp=.d)
 		$(CC) -M $(CPPFLAGS) $< > $@.$$$$; \
 		sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.$$$$ > $@; \
 		rm -f $@.$$$$
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.PHONY : install
+install :
+		sudo mkdir -p $(WEB_SERVER_BIN_DIR)
+		sudo cp $(BIN)/search.wt $(WEB_SERVER_BIN_DIR)
+
+		sudo cp -r -a page/* $(WEB_SERVER_DOC_ROOT)
+		sudo mkdir -p $(WEB_SERVER_DOC_ROOT)/style
+		sudo cp -r -a docroot/style/* $(WEB_SERVER_DOC_ROOT)/style
+		sudo mkdir -p $(WEB_SERVER_DOC_ROOT)/image
+		sudo cp -r -a image/* $(WEB_SERVER_DOC_ROOT)/image
+		sudo chown www-data:www-data -R $(WEB_SERVER_DOC_ROOT)
+
+		sudo cp -r -a approot/* $(WEB_SERVER_APP_ROOT)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #

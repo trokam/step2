@@ -1,6 +1,6 @@
 /***********************************************************************
  *                            T R O K A M
- *                         Fair Search Engine
+ *                       Internet Search Engine
  *
  * Copyright (C) 2018, Nicolas Slusarenko
  *                     nicolas.slusarenko@trokam.com
@@ -42,9 +42,11 @@ namespace Trokam
             PageInfo& operator= (const PageInfo &value);
 
             int index;
-            std::string url;
+            std::string urlOrigin;
+            std::string urlForwarded;
             int domainIndex;
             int domainType;
+            int pageType;
             std::string raw;
             std::string content;
             std::string links;

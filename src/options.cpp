@@ -1,6 +1,6 @@
 /***********************************************************************
  *                            T R O K A M
- *                         Fair Search Engine
+ *                       Internet Search Engine
  *
  * Copyright (C) 2018, Nicolas Slusarenko
  *                     nicolas.slusarenko@trokam.com
@@ -35,6 +35,7 @@
 #include <boost/program_options.hpp>
 
 /// Trokam
+#include "common.h"
 #include "fileOps.h"
 #include "options.h"
 
@@ -42,6 +43,8 @@ Trokam::Options::Options()
 {
     optPagesLimit= 1;
     optLevel= 0;
+    optCruncherType= VOID;
+
     createWorkingDirectory();
 }
 
@@ -56,10 +59,12 @@ Trokam::Options::Options(int argc, const char* argv[])
      **/
     boost::program_options::options_description desc("Allowed options");
     desc.add_options()
-        ("help",       "Produce help message")
-        ("pages-limit", boost::program_options::value<int>(),         "Number of pages to process.")
-        ("level",       boost::program_options::value<int>(),         "Level in the page table.")
-        ("seeds-file",  boost::program_options::value<std::string>(), "File with first URLs.");
+        ("help", "Produce help message")
+        ("pages-limit",          boost::program_options::value<int>(),         "Number of pages to process.")
+        ("level",                boost::program_options::value<int>(),         "Level in the page table.")
+        ("domain-to-index-file", boost::program_options::value<std::string>(), "File with domains to index.")
+        ("seeds-file",           boost::program_options::value<std::string>(), "File with first URLs.")
+        ("pages-to-index-file",  boost::program_options::value<std::string>(), "File with pages to index.");
     boost::program_options::variables_map vm;
     boost::program_options::store(boost::program_options::parse_command_line(argc, argv, desc), vm);
     boost::program_options::notify(vm);
@@ -89,12 +94,19 @@ Trokam::Options::Options(int argc, const char* argv[])
 		optLevel= vm["level"].as<int>();
     }
 
-    /**
-     * Action for 'pages-limit'.
-     **/
+    if(vm.count("domain-to-index-file"))
+    {
+		optDomainToIndexFile = vm["domain-to-index-file"].as<std::string>();
+    }
+
     if(vm.count("seeds-file"))
     {
-		optSeedsFile= vm["seeds-file"].as<std::string>();
+		optSeedsFile = vm["seeds-file"].as<std::string>();
+    }
+
+    if(vm.count("pages-to-index-file"))
+    {
+		optPagesToIndexFile = vm["pages-to-index-file"].as<std::string>();
     }
 }
 
@@ -105,6 +117,8 @@ void Trokam::Options::readSettings(const std::string &filename)
         boost::property_tree::ptree pt;
         boost::property_tree::ini_parser::read_ini(filename, pt);
 
+        optCruncherType= pt.get<std::string>("cruncher.type");
+
         optDbHost= pt.get<std::string>("database.host");
         optDbName= pt.get<std::string>("database.name");
         optDbUser= pt.get<std::string>("database.user");
@@ -114,6 +128,11 @@ void Trokam::Options::readSettings(const std::string &filename)
         optControlName= pt.get<std::string>("control.name");
         optControlUser= pt.get<std::string>("control.user");
         optControlPass= pt.get<std::string>("control.pass");
+
+        optDepotHost= pt.get<std::string>("depot.host");
+        optDepotName= pt.get<std::string>("depot.name");
+        optDepotUser= pt.get<std::string>("depot.user");
+        optDepotPass= pt.get<std::string>("depot.pass");
 
         optContentDir= pt.get<std::string>("content.directory");
 
@@ -126,9 +145,10 @@ void Trokam::Options::readSettings(const std::string &filename)
     }
 }
 
-
 Trokam::Options::Options(const Trokam::Options &opt)
 {
+    optCruncherType= opt.cruncherType();
+
     optDbHost= opt.dbHost();
     optDbName= opt.dbName();
     optDbUser= opt.dbUser();
@@ -139,8 +159,17 @@ Trokam::Options::Options(const Trokam::Options &opt)
     optControlUser= opt.controlUser();
     optControlPass= opt.controlPass();
 
+    optDepotHost= opt.depotHost();
+    optDepotName= opt.depotName();
+    optDepotUser= opt.depotUser();
+    optDepotPass= opt.depotPass();
+
     optWorkingDir= opt.workingDir();
+
+    optDomainToIndexFile = opt.domainToIndexFile();
     optSeedsFile= opt.seedsFile();
+    optPagesToIndexFile= opt.pagesToIndexFile();
+
     optContentDir= opt.contentDir();
     optPagesLimit = opt.pagesLimit();
     optLevel = opt.level();
@@ -162,6 +191,8 @@ Trokam::Options& Trokam::Options::operator= (const Trokam::Options &opt)
     /**
      * Copy data.
      */
+    optCruncherType= opt.cruncherType();
+
     optDbHost= opt.dbHost();
     optDbName= opt.dbName();
     optDbUser= opt.dbUser();
@@ -172,8 +203,17 @@ Trokam::Options& Trokam::Options::operator= (const Trokam::Options &opt)
     optControlUser= opt.controlUser();
     optControlPass= opt.controlPass();
 
+    optDepotHost= opt.depotHost();
+    optDepotName= opt.depotName();
+    optDepotUser= opt.depotUser();
+    optDepotPass= opt.depotPass();
+
     optWorkingDir= opt.workingDir();
+
+    optDomainToIndexFile = opt.domainToIndexFile();
     optSeedsFile= opt.seedsFile();
+    optPagesToIndexFile= opt.pagesToIndexFile();
+
     optContentDir= opt.contentDir();
     optPagesLimit = opt.pagesLimit();
     optLevel = opt.level();
@@ -182,6 +222,12 @@ Trokam::Options& Trokam::Options::operator= (const Trokam::Options &opt)
      * Return 'this' object.
      */
     return *this;
+}
+
+
+std::string Trokam::Options::cruncherType() const
+{
+    return optCruncherType;
 }
 
 std::string Trokam::Options::dbHost() const
@@ -224,14 +270,44 @@ std::string Trokam::Options::controlPass() const
     return optControlPass;
 }
 
+std::string Trokam::Options::depotHost() const
+{
+    return optDepotHost;
+}
+
+std::string Trokam::Options::depotName() const
+{
+    return optDepotName;
+}
+
+std::string Trokam::Options::depotUser() const
+{
+    return optDepotUser;
+}
+
+std::string Trokam::Options::depotPass() const
+{
+    return optDepotPass;
+}
+
 std::string Trokam::Options::workingDir() const
 {
     return optWorkingDir;
 }
 
+std::string Trokam::Options::domainToIndexFile() const
+{
+    return optDomainToIndexFile;
+}
+
 std::string Trokam::Options::seedsFile() const
 {
     return optSeedsFile;
+}
+
+std::string Trokam::Options::pagesToIndexFile() const
+{
+    return optPagesToIndexFile;
 }
 
 std::string Trokam::Options::contentDir() const

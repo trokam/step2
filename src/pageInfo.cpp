@@ -1,6 +1,6 @@
 /***********************************************************************
  *                            T R O K A M
- *                         Fair Search Engine
+ *                       Internet Search Engine
  *
  * Copyright (C) 2018, Nicolas Slusarenko
  *                     nicolas.slusarenko@trokam.com
@@ -29,7 +29,8 @@ Trokam::PageInfo::PageInfo()
 {
     index= -1;
     domainIndex= -1;
-    domainType= DOMAIN_NO_INSERT;
+    domainType= DOMAIN_REJECT;
+    pageType= PAGE_REJECT;
     size= 0;
     complexity= 0.0;
 }
@@ -37,9 +38,11 @@ Trokam::PageInfo::PageInfo()
 Trokam::PageInfo::PageInfo(const Trokam::PageInfo &value)
 {
     index= value.index;
-    url= value.url;
+    urlOrigin= value.urlOrigin;
+    urlForwarded= value.urlForwarded;
     domainIndex= value.domainIndex;
     domainType= value.domainType;
+    pageType= value.pageType;
     raw= value.raw;
     content= value.content;
     links= value.links;
@@ -68,9 +71,11 @@ Trokam::PageInfo& Trokam::PageInfo::operator= (const Trokam::PageInfo &value)
      * Copy data.
      */
     index= value.index;
-    url= value.url;
+    urlOrigin= value.urlOrigin;
+    urlForwarded= value.urlForwarded;
     domainIndex= value.domainIndex;
     domainType= value.domainType;
+    pageType= value.pageType;
     raw= value.raw;
     content= value.content;
     links= value.links;

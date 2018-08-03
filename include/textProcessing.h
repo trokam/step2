@@ -1,6 +1,6 @@
 /***********************************************************************
  *                            T R O K A M
- *                         Fair Search Engine
+ *                       Internet Search Engine
  *
  * Copyright (C) 2018, Nicolas Slusarenko
  *                     nicolas.slusarenko@trokam.com
@@ -81,6 +81,12 @@ namespace Trokam
             static void removeUnwantedChars(std::string &text);
 
             static void removeUglyChars(std::string &text);
+
+            static std::size_t length(const std::string &text);
+
+            static std::string extractLocation(const std::string &file);
+
+            static std::string generateLikeClause(const std::string &text);
     };
 }
 

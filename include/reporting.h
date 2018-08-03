@@ -1,6 +1,6 @@
 /***********************************************************************
  *                            T R O K A M
- *                         Fair Search Engine
+ *                       Internet Search Engine
  *
  * Copyright (C) 2018, Nicolas Slusarenko
  *                     nicolas.slusarenko@trokam.com
@@ -29,14 +29,9 @@
 
 /// Trokam
 #include "options.h"
-#include "postgresql.h"
 #include "pageInfo.h"
 #include "pageProcessing.h"
 
-/**
- * \brief
- *
- **/
 namespace Trokam
 {
     class Reporting
@@ -51,8 +46,6 @@ namespace Trokam
                                const int &level);
 
             void processingOutcome(Trokam::PageInfo &info);
-
-            void showSqlError(const pqxx::sql_error &error);
 
             static void showGeneralError(const int &error);
 

@@ -1,6 +1,6 @@
 /***********************************************************************
  *                            T R O K A M
- *                         Fair Search Engine
+ *                       Internet Search Engine
  *
  * Copyright (C) 2018, Nicolas Slusarenko
  *                     nicolas.slusarenko@trokam.com
@@ -29,11 +29,8 @@
 
 /// Trokam
 #include "options.h"
+#include "infoStore.h"
 
-/**
- * \brief
- *
- **/
 namespace Trokam
 {
     class Initialiser
@@ -41,11 +38,16 @@ namespace Trokam
         public:
 
             Initialiser(const Trokam::Options &value);
-            void fill();
+            void createSchema();
+            void fillProtocol();
+            void fillDomainToIndex();
+            void fillSeedPages();
+            void fillPagesToIndex();
 
         private:
 
             Trokam::Options settings;
+            Trokam::InfoStore info;
     };
 }
 

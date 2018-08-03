@@ -1,9 +1,11 @@
 /***********************************************************************
  *                            T R O K A M
- *                         Fair Search Engine
+ *                       Internet Search Engine
  *
  * Copyright (C) 2017, Nicolas Slusarenko
  *                     nicolas.slusarenko@trokam.com
+ *
+ * Copyright (C) 2017, Emweb bvba, Heverlee, Belgium.
  *
  * This file is part of Trokam.
  *
@@ -24,6 +26,14 @@
 #ifndef TROKAM_TOP_WINDOW_H
 #define TROKAM_TOP_WINDOW_H
 
+/// C++
+#include <memory>
+#include <string>
+
+/// Boost
+#include <boost/lockfree/stack.hpp>
+#include <boost/shared_ptr.hpp>
+
 /// Wt
 #include <Wt/WApplication.h>
 #include <Wt/WContainerWidget.h>
@@ -31,29 +41,40 @@
 #include <Wt/WMessageBox.h>
 #include <Wt/WMenu.h>
 
-/// Boost
-#include <boost/shared_ptr.hpp>
+/*
+#include <Wt/WPopupMenu.h>
+#include <Wt/WSuggestionPopup.h>
+#include <Wt/WStringListModel.h>
+#include <Wt/WEvent.h>
+#include <Wt/WTable.h>
+#include <Wt/WTimer.h>
+*/
 
 /// Trokam
+#include "bundle.h"
+#include "data.h"
+#include "pageWidget.h"
 #include "sharedResources.h"
 
 namespace Trokam
 {
-    class TopWindow: public Wt::WContainerWidget
+    class TopWindow : public Wt::WContainerWidget
     {
         public:
+
             TopWindow(boost::shared_ptr<Trokam::SharedResources> &sr, Wt::WApplication* app);
-            ~TopWindow();
 
         private:
 
-            Wt::WApplication* application;
-            boost::shared_ptr<Trokam::SharedResources> resources;
+            Wt::WApplication *application;
 
-            void addMenuItem(Wt::WMenu *menu,
-                             const char *itemKey,
-		                     const char *contentsKey,
-                             const char *path);
+            Wt::WNavigationBar *navigation_;
+
+            Wt::WStackedWidget *contentsStack_;
+
+            Wt::WMenuItem *addToMenu(Wt::WMenu *menu,
+                                     const Wt::WString& name,
+                                     std::unique_ptr<Trokam::PageWidget> topic);
     };
 }
 

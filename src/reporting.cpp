@@ -1,6 +1,6 @@
 /***********************************************************************
  *                            T R O K A M
- *                         Fair Search Engine
+ *                       Internet Search Engine
  *
  * Copyright (C) 2018, Nicolas Slusarenko
  *                     nicolas.slusarenko@trokam.com
@@ -83,10 +83,4 @@ void Trokam::Reporting::showGeneralError(const int &error)
     {
         std::cerr << "error: " << error << "\n";
     }
-}
-
-void Trokam::Reporting::showSqlError(const pqxx::sql_error &error)
-{
-    std::cerr << "SQL error: " << error.what() << "\n";
-    std::cerr << "Query was: " << error.query() << std::endl;
 }

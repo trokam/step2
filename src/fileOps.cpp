@@ -1,6 +1,6 @@
 /***********************************************************************
  *                            T R O K A M
- *                         Fair Search Engine
+ *                       Internet Search Engine
  *
  * Copyright (C) 2018, Nicolas Slusarenko
  *                     nicolas.slusarenko@trokam.com
@@ -25,12 +25,22 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <cstdio>
+#include <memory>
+#include <stdexcept>
+#include <array>
+
+/// Boost
+#include <boost/algorithm/string.hpp>
+#include <boost/tokenizer.hpp>
 
 /// Magic
 #include <magic.h>
 
 /// Trokam
+#include "common.h"
 #include "fileOps.h"
+#include "textProcessing.h"
 
 std::string Trokam::FileOps::read(const std::string &filename)
 {
@@ -58,6 +68,37 @@ void Trokam::FileOps::read(const std::string &filename,
         inputFile.seekg(0, std::ios::beg);
         inputFile.read(&content[0], content.size());
         inputFile.close();
+    }
+}
+
+void Trokam::FileOps::read(const std::string &filename,
+                                 std::vector<std::vector<std::string>> &content)
+{
+    std::ifstream inputFile(filename.c_str(), std::ios::in | std::ios::binary);
+
+    std::string line;
+    while (std::getline(inputFile, line))
+    {
+        boost::algorithm::trim_if(line, boost::algorithm::is_any_of(" \t\n\r\""));
+
+        if ((line != "") && (line[0] != '#'))
+        {
+            std::vector<std::string> row;
+
+            typedef boost::char_separator<char> char_sep;
+            typedef boost::tokenizer<char_sep> tokenizer;
+
+            boost::char_separator<char> sep(":");
+            tokenizer tok(line, sep);
+
+            for(tokenizer::iterator it= tok.begin(); it!=tok.end(); ++it)
+            {
+                const std::string partial= *it;
+                row.push_back(partial);
+            }
+
+            content.push_back(row);
+        }
     }
 }
 
@@ -115,3 +156,82 @@ std::string Trokam::FileOps::type(const std::string &file)
 
     return type;
 }
+
+std::string Trokam::FileOps::exec(const std::string &command)
+{
+    std::array<char, 128> buffer;
+    std::string result;
+    std::shared_ptr<FILE> pipe(popen(command.c_str(), "r"), pclose);
+
+    if(!pipe)
+    {
+        throw std::runtime_error("popen() failed!");
+    }
+
+    while(!feof(pipe.get()))
+    {
+        if(fgets(buffer.data(), 128, pipe.get()) != nullptr)
+        {
+            result += buffer.data();
+        }
+    }
+
+    return result;
+}
+
+void Trokam::FileOps::getFileSnippet(const std::string &contentDir,
+                                     const std::string &terms,
+                                     const int &pageIndex,
+                                     std::string &snippet)
+{
+    std::string directory;
+    std::string file;
+    Trokam::FileOps::getDirFile(contentDir, pageIndex, directory, file);
+
+    std::cout << "filename: " << file << "\n";
+
+    std::string content;
+    Trokam::FileOps::read(file, content);
+
+    std::size_t loc= content.find(terms);
+    if(loc != std::string::npos)
+    {
+        std::cout << "terms found at: " << loc << "\n";
+
+        std::size_t ini= 0;
+        std::size_t count= 400;
+
+        if(loc > 200)
+        {
+            ini = loc - 200;
+        }
+
+        snippet = content.substr(ini, count);
+        const std::string strongText= "<strong>" + terms + "</strong>";
+        boost::replace_all(snippet, terms, strongText);
+    }
+    else
+    {
+        std::cout << "terms not found\n";
+        snippet = content.substr(0, 400);
+    }
+
+    boost::replace_all(snippet, "___________", "");
+    boost::replace_all(snippet, "_____", "");
+    boost::replace_all(snippet, "__", "");
+}
+
+void Trokam::FileOps::getDirFile(const std::string &contentDir,
+                                 const int &index,
+                                 std::string &directory,
+                                 std::string &file)
+{
+    const std::string locator= Trokam::TextProcessing::leftPadding(std::to_string(index), 12, "0");
+    const std::string dir1= locator.substr(0, 4);
+    const std::string dir2= locator.substr(4, 4);
+    const std::string filename= locator.substr(8, 4);
+
+    directory= contentDir + SLASH + dir1 + SLASH + dir2;
+    file= directory + SLASH + filename;
+}
+

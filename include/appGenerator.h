@@ -1,6 +1,6 @@
 /***********************************************************************
  *                            T R O K A M
- *                         Fair Search Engine
+ *                       Internet Search Engine
  *
  * Copyright (C) 2018, Nicolas Slusarenko
  *                     nicolas.slusarenko@trokam.com
@@ -18,7 +18,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Trokam. If not, see <http://www.gnu.org/licenses/>. 
+ * along with Trokam. If not, see <http://www.gnu.org/licenses/>.
  **********************************************************************/
 
 #ifndef TROKAM_APP_GENERATOR_H
@@ -30,7 +30,7 @@
 /// Boost
 #include <boost/shared_ptr.hpp>
 
-/// trokam
+/// Trokam
 #include "sharedResources.h"
 #include "options.h"
 #include "appGenerator.h"

@@ -4,7 +4,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
          Unexpected results may occur if the code is changed deliberately.
 -->
 <dbmodel pgmodeler-ver="0.8.1" last-position="0,0" last-zoom="1"
-	 default-schema="public" default-owner="postgres">
+	 default-owner="postgres">
 <database name="new_database">
 </database>
 
@@ -14,12 +14,18 @@ CAUTION: Do not modify this file unless you know what you are doing.
 <table name="sequence">
 	<schema name="public"/>
 	<role name="postgres"/>
-	<position x="16" y="341"/>
+	<position x="14" y="38"/>
 	<column name="index" not-null="true">
 		<type name="serial"/>
 	</column>
 	<column name="value" not-null="true">
-		<type name="varchar" length="200"/>
+		<type name="varchar" length="1000"/>
+	</column>
+	<column name="count" not-null="true" default-value="0">
+		<type name="integer"/>
+	</column>
+	<column name="modified" not-null="true" default-value="0">
+		<type name="integer"/>
 	</column>
 	<constraint name="text_pkey" type="pk-constr" table="public.sequence">
 		<columns names="index" ref-type="src-columns"/>
@@ -32,12 +38,9 @@ CAUTION: Do not modify this file unless you know what you are doing.
 <table name="page">
 	<schema name="public"/>
 	<role name="postgres"/>
-	<position x="613" y="99"/>
+	<position x="577" y="209"/>
 	<column name="index" not-null="true">
 		<type name="serial"/>
-	</column>
-	<column name="protocol">
-		<type name="varchar" length="10"/>
 	</column>
 	<column name="path">
 		<type name="varchar" length="1000"/>
@@ -49,10 +52,16 @@ CAUTION: Do not modify this file unless you know what you are doing.
 		<type name="bool"/>
 	</column>
 	<column name="crunched" not-null="true">
-		<type name="date"/>
+		<type name="integer"/>
 	</column>
 	<column name="state" not-null="true">
 		<type name="smallint"/>
+	</column>
+	<column name="type" not-null="true">
+		<type name="smallint"/>
+	</column>
+	<column name="inserted" not-null="true">
+		<type name="integer"/>
 	</column>
 	<constraint name="page_pkey" type="pk-constr" table="public.page">
 		<columns names="index" ref-type="src-columns"/>
@@ -60,18 +69,23 @@ CAUTION: Do not modify this file unless you know what you are doing.
 
 	<customidxs object-type="column">
 		<object name="index_domain" index="2"/>
+		<object name="index_protocol" index="1"/>
 	</customidxs>
 
 	<customidxs object-type="constraint">
 		<object name="domain_fk" index="1"/>
+		<object name="protocol_fk" index="2"/>
 	</customidxs>
 </table>
 
 <table name="page_seq">
 	<schema name="public"/>
 	<role name="postgres"/>
-	<position x="289" y="190"/>
-	<column name="count" not-null="true">
+	<position x="287" y="124"/>
+	<column name="index" not-null="true">
+		<type name="serial"/>
+	</column>
+	<column name="seq_count" not-null="true">
 		<type name="integer"/>
 	</column>
 	<column name="relevance_in_body" not-null="true">
@@ -88,14 +102,12 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	</column>
 
 	<customidxs object-type="column">
-		<object name="index_page" index="0"/>
-		<object name="index_period" index="2"/>
-		<object name="index_sequence" index="1"/>
+		<object name="index_page" index="1"/>
+		<object name="index_sequence" index="2"/>
 	</customidxs>
 
 	<customidxs object-type="constraint">
 		<object name="page_fk" index="0"/>
-		<object name="period_fk" index="2"/>
 		<object name="sequence_fk" index="1"/>
 	</customidxs>
 </table>
@@ -107,12 +119,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	 custom-color="#baa82a"
 	 src-table="public.page"
 	 dst-table="public.page_seq"
-	 src-required="false" dst-required="false">
-	<line>
-		<position x="564.006" y="126.1"/>
-	<position x="564.006" y="217.1"/>
-	</line>
-</relationship>
+	 src-required="false" dst-required="false"/>
 
 <relationship name="text_has_many_page_text" type="rel1n"
 	 src-col-pattern="{sc}_{st}"
@@ -130,7 +137,7 @@ CAUTION: Do not modify this file unless you know what you are doing.
 <table name="trait">
 	<schema name="public"/>
 	<role name="postgres"/>
-	<position x="275" y="36"/>
+	<position x="285" y="313"/>
 	<column name="title" not-null="true">
 		<type name="varchar" length="1000"/>
 	</column>
@@ -139,6 +146,9 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	</column>
 	<column name="complexity" not-null="true">
 		<type name="float"/>
+	</column>
+	<column name="forwarded" not-null="true">
+		<type name="varchar" length="1000"/>
 	</column>
 
 	<customidxs object-type="column">
@@ -158,86 +168,12 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	 custom-color="#aa0000"
 	 src-table="public.page"
 	 dst-table="public.trait"
-	 src-required="false" dst-required="false">
-	<line>
-		<position x="561.186" y="126.1"/>
-	<position x="561.186" y="63.1"/>
-	</line>
-</relationship>
-
-<table name="period">
-	<schema name="public"/>
-	<role name="postgres"/>
-	<position x="609" y="354"/>
-	<column name="index" not-null="true">
-		<type name="serial"/>
-	</column>
-	<column name="start" not-null="true">
-		<type name="date"/>
-	</column>
-	<constraint name="period_pkey" type="pk-constr" table="public.period">
-		<columns names="index" ref-type="src-columns"/>
-	</constraint>
-</table>
-
-<table name="seq_occ">
-	<schema name="public"/>
-	<role name="postgres"/>
-	<position x="303" y="424"/>
-	<column name="count" not-null="true">
-		<type name="integer"/>
-	</column>
-
-	<customidxs object-type="column">
-		<object name="index_period" index="1"/>
-		<object name="index_sequence" index="0"/>
-	</customidxs>
-
-	<customidxs object-type="constraint">
-		<object name="period_fk" index="1"/>
-		<object name="sequence_fk" index="0"/>
-	</customidxs>
-</table>
-
-<relationship name="sequence_has_many_seq_occ" type="rel1n"
-	 src-col-pattern="{sc}_{st}"
-	 pk-pattern="{dt}_pk" uq-pattern="{dt}_uq"
-	 src-fk-pattern="{st}_fk"
-	 custom-color="#753b24"
-	 src-table="public.sequence"
-	 dst-table="public.seq_occ"
 	 src-required="false" dst-required="false"/>
-
-<relationship name="period_has_many_seq_occ" type="rel1n"
-	 src-col-pattern="{sc}_{st}"
-	 pk-pattern="{dt}_pk" uq-pattern="{dt}_uq"
-	 src-fk-pattern="{st}_fk"
-	 custom-color="#cec351"
-	 src-table="public.period"
-	 dst-table="public.seq_occ"
-	 src-required="false" dst-required="false"/>
-
-<relationship name="period_has_many_page_seq" type="rel1n"
-	 src-col-pattern="{sc}_{st}"
-	 pk-pattern="{dt}_pk" uq-pattern="{dt}_uq"
-	 src-fk-pattern="{st}_fk"
-	 custom-color="#0538df"
-	 src-table="public.period"
-	 dst-table="public.page_seq"
-	 src-required="false" dst-required="false"/>
-
-<constraint name="unique_page_text" type="uq-constr" table="public.page_seq">
-	<columns names="index_page,index_sequence,index_period" ref-type="src-columns"/>
-</constraint>
-
-<constraint name="unique_seq_occ" type="uq-constr" table="public.seq_occ">
-	<columns names="index_sequence,index_period" ref-type="src-columns"/>
-</constraint>
 
 <table name="domain">
 	<schema name="public"/>
 	<role name="postgres"/>
-	<position x="913" y="27"/>
+	<position x="903" y="253"/>
 	<column name="index" not-null="true">
 		<type name="serial"/>
 	</column>
@@ -262,27 +198,66 @@ CAUTION: Do not modify this file unless you know what you are doing.
 	 custom-color="#af9e77"
 	 src-table="public.domain"
 	 dst-table="public.page"
+	 src-required="false" dst-required="false"/>
+
+<index name="sequence_value_index" table="public.sequence"
+	 concurrent="false" unique="false" fast-update="false" buffering="false"
+	 index-type="btree" factor="0">
+		<idxelement use-sorting="true" nulls-first="false" asc-order="true">
+			<column name="value"/>
+		</idxelement>
+</index>
+
+<table name="protocol">
+	<schema name="public"/>
+	<role name="postgres"/>
+	<position x="894" y="176"/>
+	<column name="index" not-null="true">
+		<type name="smallint"/>
+	</column>
+	<column name="value" not-null="true">
+		<type name="varchar" length="10"/>
+	</column>
+	<constraint name="protocol_pkey" type="pk-constr" table="public.protocol">
+		<columns names="index" ref-type="src-columns"/>
+	</constraint>
+</table>
+
+<relationship name="protocol_has_many_page" type="rel1n"
+	 src-col-pattern="{sc}_{st}"
+	 pk-pattern="{dt}_pk" uq-pattern="{dt}_uq"
+	 src-fk-pattern="{st}_fk"
+	 custom-color="#7f71b4"
+	 src-table="public.protocol"
+	 dst-table="public.page"
 	 src-required="false" dst-required="false">
-	<line>
-		<position x="884.186" y="54.1"/>
-	<position x="884.186" y="152.1"/>
-	</line>
+	<label ref-type="name-label">
+		<position x="100.731" y="20.3393"/>
+	</label>
 </relationship>
 
 <constraint name="page_unique" type="uq-constr" table="public.page">
-	<columns names="protocol,index_domain,path" ref-type="src-columns"/>
+	<columns names="index_protocol,index_domain,path" ref-type="src-columns"/>
 </constraint>
 
-<table name="command">
-	<schema name="public"/>
-	<role name="postgres"/>
-	<position x="953" y="383"/>
-	<column name="run" not-null="true">
-		<type name="bool"/>
-	</column>
-	<column name="active" not-null="true">
-		<type name="bool"/>
-	</column>
-</table>
+<index name="page_path_index" table="public.page"
+	 concurrent="false" unique="false" fast-update="false" buffering="false"
+	 index-type="btree" factor="0">
+		<idxelement use-sorting="true" nulls-first="false" asc-order="true">
+			<column name="path"/>
+		</idxelement>
+</index>
+
+<index name="domain_value_index" table="public.domain"
+	 concurrent="false" unique="false" fast-update="false" buffering="false"
+	 index-type="btree" factor="0">
+		<idxelement use-sorting="true" nulls-first="false" asc-order="true">
+			<column name="value"/>
+		</idxelement>
+</index>
+
+<constraint name="page_seq_unique" type="uq-constr" table="public.page_seq">
+	<columns names="index_page,index_sequence" ref-type="src-columns"/>
+</constraint>
 
 </dbmodel>

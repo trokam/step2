@@ -1,6 +1,6 @@
 /***********************************************************************
  *                            T R O K A M
- *                         Fair Search Engine
+ *                       Internet Search Engine
  *
  * Copyright (C) 2018, Nicolas Slusarenko
  *                     nicolas.slusarenko@trokam.com
@@ -81,6 +81,57 @@ Trokam::Postgresql::Postgresql(const Trokam::Options &value,
         }
     }
 
+    if(id == DB_DEPOT)
+    {
+        if(value.dbHost() != "")
+        {
+            connParameters+= "host=" + value.depotHost() + " ";
+        }
+
+        if(value.dbName() != "")
+        {
+            connParameters+= "dbname=" + value.depotName() + " ";
+        }
+
+        if(value.dbUser() != "")
+        {
+            connParameters+= "user=" + value.depotUser() + " ";
+        }
+
+        if(value.dbPass() != "")
+        {
+            connParameters+= "password=" + value.depotPass() + " ";
+        }
+    }
+
+    try
+    {
+        dbConnection= new pqxx::connection(connParameters);
+        std::cout << "connected to database \n";
+        std::cout << "backend version: " << dbConnection->server_version() << "\n";
+        std::cout << "protocol version: " << dbConnection->protocol_version() << std::endl;
+
+    }
+    catch(const std::exception &e)
+    {
+        std::cerr << "Exception: " << e.what() << std::endl;
+        throw Trokam::Exception(COULD_NOT_CONNECT_TO_DATABASE);
+    }
+}
+
+Trokam::Postgresql::Postgresql(const std::string &host,
+                               const std::string &port,
+                               const std::string &name,
+                               const std::string &user,
+                               const std::string &pass)
+{
+    std::string connParameters;
+    connParameters+= "host=" + host + " ";
+    connParameters+= "port=" + port + " ";
+    connParameters+= "dbname=" + name + " ";
+    connParameters+= "user=" + user + " ";
+    connParameters+= "password=" + pass + " ";
+
     try
     {
         dbConnection= new pqxx::connection(connParameters);
@@ -144,7 +195,7 @@ void Trokam::Postgresql::execSql(const std::string &sentence)
 }
 
 void Trokam::Postgresql::execSql(const std::string &sentence,
-                                 boost::scoped_ptr<pqxx::result> &answer)
+                                       pqxx::result &answer)
 {
     try
     {
@@ -156,7 +207,7 @@ void Trokam::Postgresql::execSql(const std::string &sentence,
         /**
          * Perform a query on the database, storing result in answer.
          **/
-        answer.reset(new pqxx::result(T.exec(sentence)));
+        answer= T.exec(sentence);
 
         /**
          * Tell the transaction that it has been successful.
@@ -224,20 +275,20 @@ void Trokam::Postgresql::execSql(std::vector<std::string> &bundle)
     }
 }
 
-void Trokam::Postgresql::extract(const boost::scoped_ptr<pqxx::result> &answer, int &value)
+void Trokam::Postgresql::extract(const pqxx::result &answer, int &value)
 {
-    const pqxx::result::const_iterator col= answer->begin();
-    if(col != answer->end())
+    const pqxx::result::const_iterator row = answer.begin();
+    if (row != answer.end())
     {
-        value= col[0].as(int());
+        value= row[0].as(int());
     }
 }
 
-void Trokam::Postgresql::extract(const boost::scoped_ptr<pqxx::result> &answer, bool &value)
+void Trokam::Postgresql::extract(const pqxx::result &answer, bool &value)
 {
-    const pqxx::result::const_iterator col= answer->begin();
-    if(col != answer->end())
+    const pqxx::result::const_iterator row = answer.begin();
+    if (row != answer.end())
     {
-        value= col[0].as(bool());
+        value= row[0].as(bool());
     }
 }

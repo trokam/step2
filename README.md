@@ -1,6 +1,7 @@
 # Trokam Step 2
 
-Trokam is a project aimed to develop a fair online search engine.
+Trokam is an on-going project to develop an ad-free internet search engine,
+build on free software and funded exclusively on donations.
 
 ## License
 

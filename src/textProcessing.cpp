@@ -1,6 +1,6 @@
 /***********************************************************************
  *                            T R O K A M
- *                         Fair Search Engine
+ *                       Internet Search Engine
  *
  * Copyright (C) 2018, Nicolas Slusarenko
  *                     nicolas.slusarenko@trokam.com
@@ -25,6 +25,8 @@
 #include <iostream>
 #include <sstream>
 #include <cctype>
+#include <clocale>
+#include <cstdlib>
 
 /// Boost
 #include <boost/algorithm/string.hpp>
@@ -34,9 +36,10 @@
 #include "common.h"
 #include "differentStrings.h"
 #include "textProcessing.h"
+#include "fileOps.h"
 
 int Trokam::TextProcessing::extractSequences(std::string &content,
-                                              Trokam::TextStore &bag)
+                                             Trokam::TextStore &bag)
 {
     std::cout << "extracting sequences ..." << std::endl;
 
@@ -53,7 +56,7 @@ int Trokam::TextProcessing::extractSequences(std::string &content,
     typedef boost::char_separator<char> char_sep;
     typedef boost::tokenizer<char_sep> tokenizer;
 
-    boost::char_separator<char> sep(" —_,.;/*-=|»<>[](){}&\n\r\t\"");
+    boost::char_separator<char> sep(" \n");
     tokenizer tok(content, sep);
 
     for(tokenizer::iterator it= tok.begin(); it!=tok.end(); ++it)
@@ -72,6 +75,7 @@ int Trokam::TextProcessing::extractSequences(std::string &content,
             }
 
             boost::algorithm::trim_if(sequence, boost::algorithm::is_any_of(" "));
+
             bag.insert(sequence);
 
             /**
@@ -101,6 +105,8 @@ int Trokam::TextProcessing::extractSequences(std::string &content,
 void Trokam::TextProcessing::extractURLs(const std::string &text,
                                               Trokam::DifferentStrings &bag)
 {
+    std::cout << "extracting URLs ..." << std::endl;
+
     std::istringstream input(text);
     for(std::string line; std::getline(input, line);)
     {
@@ -112,7 +118,7 @@ void Trokam::TextProcessing::extractURLs(const std::string &text,
         /**
          * Must be within a minimum and maximun length.
          **/
-        if((line.length() < 10) || (500 < line.length()))
+        if((line.length() < 8) || (500 < line.length()))
         {
             continue;
         }
@@ -144,7 +150,8 @@ void Trokam::TextProcessing::extractURLs(const std::string &text,
         if((last4 == ".pdf") ||
            (last4 == ".xml") ||
            (last4 == ".rss") ||
-           (last4 == ".zip"))
+           (last4 == ".zip") ||
+           (last4 == ".jpg"))
         {
             continue;
         }
@@ -163,6 +170,8 @@ void Trokam::TextProcessing::extractURLs(const std::string &text,
             bag.insert(line);
         }
     }
+
+    std::cout << "... done" << std::endl;
 }
 
 int Trokam::TextProcessing::relevance(const std::string &block,
@@ -274,6 +283,11 @@ std::string Trokam::TextProcessing::rightPadding(const std::string &text,
     std::string piece;
     int diff= totalLength-text.length();
 
+    //int diff= totalLength-text.size();
+
+    // int len= Trokam::TextProcessing::length(text);
+    // int diff= totalLength-len;
+
     for (int i=0; i<diff; i++)
     {
         piece+= fill;
@@ -291,6 +305,11 @@ void Trokam::TextProcessing::extractTitle(const std::string &content,
     if((ini != std::string::npos) && (end != std::string::npos))
     {
         title= content.substr(ini+7, end-ini-7);
+    }
+
+    if ( title.length() > 300 )
+    {
+        title = title.substr(0, 300);
     }
 
     /**
@@ -311,13 +330,63 @@ void Trokam::TextProcessing::removeUnwantedChars(std::string &text)
     boost::replace_all(text, "'s", "");
     boost::replace_all(text, "'", "");
 
-    for(unsigned int i= 0; i<text.length(); i++)
-    {
-        if(int(text[i])<0)
-        {
-            text.replace(i, 1, " ");
-        }
-    }
+    boost::replace_all(text, " + ", " ");
+    boost::replace_all(text, " +", " ");
+    boost::replace_all(text, "—", " ");
+    boost::replace_all(text, "–", " ");
+    boost::replace_all(text, "_", " ");
+    boost::replace_all(text, ",", " ");
+    boost::replace_all(text, ".", " ");
+    boost::replace_all(text, ":", " ");
+    boost::replace_all(text, ";", " ");
+    boost::replace_all(text, "/", " ");
+    boost::replace_all(text, "*", " ");
+    boost::replace_all(text, "#", " ");
+    boost::replace_all(text, "|", " ");
+    boost::replace_all(text, "»", " ");
+    boost::replace_all(text, "«", " ");
+    boost::replace_all(text, "<", " ");
+    boost::replace_all(text, ">", " ");
+    boost::replace_all(text, "[", " ");
+    boost::replace_all(text, "]", " ");
+    boost::replace_all(text, "(", " ");
+    boost::replace_all(text, ")", " ");
+    boost::replace_all(text, "{", " ");
+    boost::replace_all(text, "}", " ");
+    boost::replace_all(text, "&", " ");
+    boost::replace_all(text, "^", " ");
+    boost::replace_all(text, "¿", " ");
+    boost::replace_all(text, "?", " ");
+    boost::replace_all(text, "¡", " ");
+    boost::replace_all(text, "!", " ");
+
+    boost::replace_all(text, "=", " ");
+    boost::replace_all(text, "-", " ");
+    boost::replace_all(text, "\t", " ");
+    boost::replace_all(text, "\"", " ");
+
+    boost::replace_all(text, "，", " ");
+    boost::replace_all(text, "；", " ");
+    boost::replace_all(text, "：", " ");
+    boost::replace_all(text, "（", " ");
+    boost::replace_all(text, "）", " ");
+    boost::replace_all(text, "・", " ");
+    boost::replace_all(text, "？", " ");
+
+    boost::replace_all(text, "•", " ");
+    boost::replace_all(text, "·", " ");
+    boost::replace_all(text, "”", " ");
+    boost::replace_all(text, "„", " ");
+
+    boost::replace_all(text, "『", " ");
+    boost::replace_all(text, "』", " ");
+    boost::replace_all(text, "「", " ");
+    boost::replace_all(text, "」", " ");
+    boost::replace_all(text, "。", " ");
+    boost::replace_all(text, "、", " ");
+
+    boost::replace_all(text, "►", " ");
+    boost::replace_all(text, "↑", " ");
 }
 
 void Trokam::TextProcessing::removeUglyChars(std::string &text)
@@ -342,4 +411,81 @@ void Trokam::TextProcessing::removeUglyChars(std::string &text)
     boost::replace_all(text, "     ", " ");
     boost::replace_all(text, "   ", " ");
     boost::replace_all(text, "  ", " ");
+}
+
+std::size_t Trokam::TextProcessing::length(const std::string &s)
+{
+    std::size_t result = 0;
+    const char* ptr = s.data();
+    const char* end = ptr + s.size();
+    while (ptr < end)
+    {
+        int next= std::mbstowcs(NULL, s.c_str(), s.size());
+        if (next == -1)
+        {
+            throw std::runtime_error("strlen_mb(): conversion error");
+        }
+        ptr += next;
+        ++result;
+    }
+    return result;
+}
+
+std::string Trokam::TextProcessing::extractLocation(const std::string &file)
+{
+    const std::string TAG= "Location: ";
+
+    std::string location = VOID;
+    std::string content;
+
+    Trokam::FileOps::read(file, content);
+
+    std::istringstream input(content);
+
+    /**
+     * There might be several lines begining with 'Location'.
+     * It must get the value of the last one.
+     **/
+
+    for(std::string line; std::getline(input, line);)
+    {
+        const std::string first10 = line.substr(0, 10);
+        if (first10 == TAG)
+        {
+            std::cout << "line: '" << line << "'\n";
+            const int loc = line.find(" ", 12);
+            const std::string text= line.substr(10, loc-10);
+
+            const std::string first7= text.substr(0, 7);
+            const std::string first8= text.substr(0, 8);
+
+            if((first7==HTTP) || (first8==HTTPS))
+            {
+                location = text;
+            }
+        }
+    }
+
+    return location;
+}
+
+std::string Trokam::TextProcessing::generateLikeClause(const std::string &text)
+{
+    std::string clause;
+
+    typedef boost::char_separator<char> char_sep;
+    typedef boost::tokenizer<char_sep> tokenizer;
+    boost::char_separator<char> sep(" ");
+    tokenizer tok(text, sep);
+
+    for(tokenizer::iterator it= tok.begin(); it!=tok.end(); ++it)
+    {
+        const std::string token= *it;
+        if(token.length() >= 2)
+        {
+            clause+= "AND value LIKE '%" + token + "%' ";
+        }
+    }
+
+    return clause;
 }

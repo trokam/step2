@@ -1,6 +1,6 @@
 /***********************************************************************
  *                            T R O K A M
- *                         Fair Search Engine
+ *                       Internet Search Engine
  *
  * Copyright (C) 2018, Nicolas Slusarenko
  *                     nicolas.slusarenko@trokam.com
@@ -28,15 +28,12 @@
 #include <string>
 #include <vector>
 
-/**
- * \brief
- *
- **/
 namespace Trokam
 {
     struct TextOcc
     {
         std::string text;
+        int index;
         int occurrence;
         int relevanceInBody;
         int relevanceInUrl;
@@ -55,7 +52,7 @@ namespace Trokam
              * Show the first sequences,
              * sorted descendently by occurrence.
              **/
-            void show(const int &value= 10);
+            void show(const int &value= -1);
 
             void setRelevance(const int &total,
                               const std::string &title,
@@ -64,12 +61,17 @@ namespace Trokam
 
             TextOcc get(const int &id) const;
 
+            TextOcc& operator[](const int &index)
+            {
+                return textCollection.at(index);
+            };
+
+
         private:
 
             bool sorted;
             std::vector<TextOcc> textCollection;
 
-            // void sort();
             void sortRelevanceBody();
             void sortRelevanceTotal();
     };

@@ -1,6 +1,6 @@
 /***********************************************************************
  *                            T R O K A M
- *                         Fair Search Engine
+ *                       Internet Search Engine
  *
  * Copyright (C) 2018, Nicolas Slusarenko
  *                     nicolas.slusarenko@trokam.com
@@ -32,10 +32,6 @@
 #include "pageInfo.h"
 #include "pageProcessing.h"
 
-/**
- * \brief
- *
- **/
 namespace Trokam
 {
     class Web

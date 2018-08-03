@@ -1,6 +1,6 @@
 /***********************************************************************
  *                            T R O K A M
- *                         Fair Search Engine
+ *                       Internet Search Engine
  *
  * Copyright (C) 2018, Nicolas Slusarenko
  *                     nicolas.slusarenko@trokam.com
@@ -24,9 +24,12 @@
 #ifndef TROKAM_SHARED_RESOURCES_H
 #define TROKAM_SHARED_RESOURCES_H
 
+/// C++
+#include <vector>
+
 /// Trokam
 #include "options.h"
-#include "infoStore.h"
+#include "postgresql.h"
 
 namespace Trokam
 {
@@ -36,7 +39,11 @@ namespace Trokam
 
             SharedResources(Trokam::Options &value);
 
-            Trokam::InfoStore store;
+            ~SharedResources();
+
+            Trokam::Options settings;
+
+            std::vector<Trokam::Postgresql*> dbCluster;
     };
 }
 

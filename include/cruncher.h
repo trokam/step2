@@ -1,6 +1,6 @@
 /***********************************************************************
  *                            T R O K A M
- *                         Fair Search Engine
+ *                       Internet Search Engine
  *
  * Copyright (C) 2018, Nicolas Slusarenko
  *                     nicolas.slusarenko@trokam.com
@@ -33,8 +33,7 @@
 #include "reporting.h"
 
 /**
- * \brief Cruncher extract information of web pages and local files.
- *
+ * Cruncher extract information of web pages.
  **/
 namespace Trokam
 {
@@ -44,11 +43,13 @@ namespace Trokam
 
             Cruncher(const Trokam::Options &value);
 
-            void run();
+            int run();
 
         private:
 
+            int level;
             int count;
+            int periodBeginning;
             Trokam::Options settings;
             Trokam::InfoStore storage;
             Trokam::Reporting msg;

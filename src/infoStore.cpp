@@ -1,6 +1,6 @@
 /***********************************************************************
  *                            T R O K A M
- *                         Fair Search Engine
+ *                       Internet Search Engine
  *
  * Copyright (C) 2018, Nicolas Slusarenko
  *                     nicolas.slusarenko@trokam.com
@@ -22,14 +22,21 @@
  **********************************************************************/
 
 /// C++
-#include <string>
+#include <ctime>
 #include <iostream>
+#include <sstream>
+#include <string>
 
 /// Boost
 #include <boost/algorithm/string.hpp>
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/archive/text_iarchive.hpp>
+#include <boost/serialization/string.hpp>
+#include <boost/serialization/vector.hpp>
 
 /// Trokam
 #include "common.h"
+#include "data.h"
 #include "fileOps.h"
 #include "exception.h"
 #include "infoStore.h"
@@ -39,93 +46,98 @@
 #include "textProcessing.h"
 #include "textStore.h"
 
+
+/// ======================== P U B L I C ===============================
+
 Trokam::InfoStore::InfoStore(const Trokam::Options &value): settings(value),
                                                             db(value, DB_TEXT_SEARCH),
                                                             msg(value)
 {}
 
-void Trokam::InfoStore::getUrlForProcessing(int &index,
-                                            std::string &url,
-                                            int &level)
+bool Trokam::InfoStore::getUrlForProcessing(std::vector<Trokam::PageInfo> &pages,
+                                                                      int &level,
+                                                                const int &periodBeginning)
 {
+    int totalPages= 20;
+
+    if ((settings.pagesLimit() != 0) && (settings.pagesLimit() < 20))
+    {
+        totalPages= settings.pagesLimit();
+    }
+
     std::string selectSentence;
     selectSentence=  "SELECT index ";
     selectSentence+= "FROM page ";
     selectSentence+= "WHERE processing=false ";
-    selectSentence+= "ORDER BY crunched ASC, level ASC ";
-    selectSentence+= "LIMIT 1 ";
-    selectSentence+= "FOR UPDATE ";
+    selectSentence+= "AND crunched<" + std::to_string(periodBeginning) + " ";
+    selectSentence+= "AND level=" + std::to_string(level) + " ";
+    selectSentence+= "ORDER BY random() ";
+    selectSentence+= "LIMIT " + std::to_string(totalPages);
 
-    std::string updateSentence;
-    updateSentence=  "UPDATE page ";
-    updateSentence+= "SET processing=true ";
-    updateSentence+= "FROM domain ";
-    updateSentence+= "WHERE page.index=(" + selectSentence + ") ";
-    updateSentence+= "AND page.index_domain=domain.index ";
-    updateSentence+= "RETURNING page.index, page.protocol, domain.value, page.path, page.level ";
+    std::cout << "query: '" << selectSentence << "'\n";
 
-    boost::scoped_ptr<pqxx::result> answer;
-    db.execSql(updateSentence, answer);
+    pqxx::result answerIndex;
+    db.execSql(selectSentence, answerIndex);
 
-    pqxx::result::const_iterator col= answer->begin();
-    if(col != answer->end())
+    pqxx::result::iterator it= answerIndex.begin();
+    if(it == answerIndex.end())
     {
-        index= col[0].as(int());
-        const std::string protocol= col[1].as(std::string());
-        const std::string domain= col[2].as(std::string());
-        const std::string path= col[3].as(std::string());
-        url= protocol + domain + SLASH + path;
-        level= col[4].as(int());
+        return false;
     }
     else
     {
-        throw Trokam::Exception(NO_PAGES_TO_PROCESS);
+        for(pqxx::result::const_iterator rowIndex= answerIndex.begin(); rowIndex != answerIndex.end(); ++rowIndex)
+        {
+            const int index= rowIndex[0].as(int());
+
+            std::string updateSentence;
+            updateSentence=  "UPDATE page ";
+            updateSentence+= "SET processing=true ";
+            updateSentence+= "WHERE page.index=" + std::to_string(index) + " ";
+            db.execSql(updateSentence);
+
+            selectSentence=  "SELECT protocol.value, domain.value, page.path, page.level, domain.index, domain.type, page.type ";
+            selectSentence+= "FROM protocol, page, domain ";
+            selectSentence+= "WHERE page.index=" + std::to_string(index) + " ";
+            selectSentence+= "AND page.index_domain=domain.index ";
+            selectSentence+= "AND page.index_protocol=protocol.index ";
+
+            pqxx::result answerFields;
+            db.execSql(selectSentence, answerFields);
+
+            pqxx::result::iterator row= answerFields.begin();
+            if(row != answerFields.end())
+            {
+                Trokam::PageInfo page;
+
+                page.index= index;
+                const std::string protocol= row[0].as(std::string());
+                const std::string domain=   row[1].as(std::string());
+                const std::string path=     row[2].as(std::string());
+                page.urlOrigin = protocol + domain + SLASH + path;
+                level=                      row[3].as(int());
+                page.domainIndex=           row[4].as(int());
+                page.domainType=            row[5].as(int());
+                page.pageType =             row[6].as(int());
+
+                pages.push_back(page);
+            }
+            else
+            {
+                throw Trokam::Exception(NO_PAGES_TO_PROCESS);
+            }
+        }
     }
-}
 
-void Trokam::InfoStore::getUrlForProcessing(Trokam::PageInfo &page,
-                                            int &level)
-{
-    std::string selectSentence;
-    selectSentence=  "SELECT index ";
-    selectSentence+= "FROM page ";
-    selectSentence+= "WHERE processing=false ";
-    selectSentence+= "ORDER BY crunched ASC, level ASC ";
-    selectSentence+= "LIMIT 1 ";
-    selectSentence+= "FOR UPDATE ";
-
-    std::string updateSentence;
-    updateSentence=  "UPDATE page ";
-    updateSentence+= "SET processing=true ";
-    updateSentence+= "FROM domain ";
-    updateSentence+= "WHERE page.index=(" + selectSentence + ") ";
-    updateSentence+= "AND page.index_domain=domain.index ";
-    updateSentence+= "RETURNING page.index, page.protocol, domain.value, page.path, page.level, domain.index, domain.type ";
-
-    boost::scoped_ptr<pqxx::result> answer;
-    db.execSql(updateSentence, answer);
-
-    pqxx::result::const_iterator col= answer->begin();
-    if(col != answer->end())
-    {
-        page.index= col[0].as(int());
-        const std::string protocol= col[1].as(std::string());
-        const std::string domain= col[2].as(std::string());
-        const std::string path= col[3].as(std::string());
-        page.url= protocol + domain + SLASH + path;
-        level= col[4].as(int());
-        page.domainIndex= col[5].as(int());;
-        page.domainType= col[6].as(int());;
-    }
-    else
-    {
-        throw Trokam::Exception(NO_PAGES_TO_PROCESS);
-    }
+    return true;
 }
 
 bool Trokam::InfoStore::insertPage(const std::string &url,
-                                   const int &level)
+                                   const int &level,
+                                   const int &type)
 {
+    std::cout << "inserting page: '" << url << "' ...\n";
+
     try
     {
         std::string protocol, domain, path;
@@ -134,18 +146,29 @@ bool Trokam::InfoStore::insertPage(const std::string &url,
             if((protocol==HTTP) || (protocol==HTTPS))
             {
                 int domainIndex= getDomainIndex(domain);
+                int protocolIndex= getProtocolIndex(protocol);
+                int seconds= std::time(nullptr);
 
                 std::string sentence;
-                sentence=  "INSERT INTO page ";
+                sentence=  "INSERT INTO page(index_protocol, \
+                                             index_domain, \
+                                             path, \
+                                             level, \
+                                             processing, \
+                                             crunched, \
+                                             state, \
+                                             type, \
+                                             inserted) ";
                 sentence+= "VALUES (";
-                sentence+= "DEFAULT, ";
-                sentence+= "'" + protocol + "', ";
+                sentence+= std::to_string(protocolIndex) + ", ";
                 sentence+= std::to_string(domainIndex) + ", ";
                 sentence+= "'" + path + "', ";
                 sentence+= std::to_string(level) + ", ";
                 sentence+= "false, ";
-                sentence+= "'" + OUT_OF_TIME + "', ";
-                sentence+=  std::to_string(UNKNOWN) + " ";
+                sentence+= "0, ";
+                sentence+= std::to_string(UNKNOWN) + ", ";
+                sentence+= std::to_string(type) + ", ";
+                sentence+= std::to_string(seconds);
                 sentence+= ") ";
                 db.execSql(sentence);
             }
@@ -155,19 +178,9 @@ bool Trokam::InfoStore::insertPage(const std::string &url,
             }
         }
     }
-    catch(const pqxx::sql_error &e)
+    catch(const std::exception &e)
     {
-        /**
-         * Only if the error is different to 'duplicate key value
-         * violates unique constraint page_unique' is shown.
-         * Duplicate URLs are fairly common and they occurrence
-         * are not a failure.
-         **/
-        const std::string error(e.what());
-        if(error.find(PAGE_UNIQUE) ==  std::string::npos)
-        {
-            msg.showSqlError(e);
-        }
+        std::cout << e.what() << "\n";
         return false;
     }
     return true;
@@ -175,128 +188,318 @@ bool Trokam::InfoStore::insertPage(const std::string &url,
 
 void Trokam::InfoStore::insertPage(const int &index,
                                    const int &level,
-                                   const Trokam::PageInfo &info)
+                                         Trokam::PageInfo &info)
 {
+    int ini0= std::time(nullptr);
     insertSequences(index, info.sequences);
-    insertSequenceOccurrence(info.sequences);
-    updateSequenceOccurrence(info.sequences);
+    int end0= std::time(nullptr);
+
+    int ini1= std::time(nullptr);
+    insertSeqInPage(index, info.sequences);
+    int end1= std::time(nullptr);
+
+    int ini2= std::time(nullptr);
     insertTraits(index, info);
-    // insertUrls(info.urlBag, level+1);
+    int end2= std::time(nullptr);
+
+    int ini3= std::time(nullptr);
+    insertUrls(info, level+1);
+    int end3= std::time(nullptr);
+
+    int ini4= std::time(nullptr);
+    savePageContent(index, info.content);
+    int end4= std::time(nullptr);
+
+    int ini5= std::time(nullptr);
+    setCrunched(index, info);
+    int end5= std::time(nullptr);
+
+    std::cout << "ini0: " << ini0 << " end5: " << end5 << "\n";
+
+    const std::string duration0= std::to_string(end0-ini0);
+    const std::string duration1= std::to_string(end1-ini1);
+    const std::string duration2= std::to_string(end2-ini2);
+    const std::string duration3= std::to_string(end3-ini3);
+    const std::string duration4= std::to_string(end4-ini4);
+    const std::string duration5= std::to_string(end5-ini5);
+    const std::string total=     std::to_string(end5-ini0);
+
+    std::cout << "+----------------------------+\n";
+    std::cout << "| insertSequences         " << Trokam::TextProcessing::leftPadding(duration0, 2, " ") + " |\n";
+    std::cout << "| insertSeqInPage         " << Trokam::TextProcessing::leftPadding(duration1, 2, " ") + " |\n";
+    std::cout << "| insertTraits            " << Trokam::TextProcessing::leftPadding(duration2, 2, " ") + " |\n";
+    std::cout << "| insertUrls              " << Trokam::TextProcessing::leftPadding(duration3, 2, " ") + " |\n";
+    std::cout << "| savePageContent         " << Trokam::TextProcessing::leftPadding(duration4, 2, " ") + " |\n";
+    std::cout << "| setCrunched             " << Trokam::TextProcessing::leftPadding(duration5, 2, " ") + " |\n";
+    std::cout << "+----------------------------+\n";
+    std::cout << "| total                   " << Trokam::TextProcessing::leftPadding(total, 2, " ") + " |\n";
+    std::cout << "+----------------------------+\n";
+
+    /***
+    insertSequences(index, info.sequences);
+    insertSeqInPage(index, info.sequences);
+    insertTraits(index, info);
     insertUrls(info, level+1);
     savePageContent(index, info.content);
     setCrunched(index, info);
+    ***/
 }
+
+void Trokam::InfoStore::insertSeqInPage(const int &pageIndex,
+                                              Trokam::TextStore &bag)
+{
+    std::cout << "inserting in page_seq ...\n";
+
+    /**
+     * Before inserting indexes of the sequences of a given page,
+     * delete all sequences associated to the page.
+     **/
+    std::string sentenceDelete;
+    sentenceDelete=  "DELETE FROM page_seq ";
+    sentenceDelete+= "WHERE index_page=" + std::to_string(pageIndex);
+    db.execSql(sentenceDelete);
+
+    int count= 0;
+    for(int i=0; i<bag.size(); i++)
+    {
+        if (count < SEQUENCE_LIMIT)
+        {
+            try
+            {
+                std::string sentenceInsert;
+                sentenceInsert=  "INSERT INTO page_seq(index_page, \
+                                                       index_sequence, \
+                                                       seq_count, \
+                                                       relevance_in_body, \
+                                                       relevance_in_url, \
+                                                       relevance_in_title, \
+                                                       relevance_total) ";
+                sentenceInsert+= "VALUES(" + std::to_string(pageIndex) + ", ";
+                sentenceInsert+= std::to_string(bag[i].index) + ", ";
+                sentenceInsert+= std::to_string(bag[i].occurrence) + ", ";
+                sentenceInsert+= std::to_string(bag[i].relevanceInBody) + ", ";
+                sentenceInsert+= std::to_string(bag[i].relevanceInUrl) + ", ";
+                sentenceInsert+= std::to_string(bag[i].relevanceInTitle) + ", ";
+                sentenceInsert+= std::to_string(bag[i].relevanceTotal) + ") ";
+                db.execSql(sentenceInsert);
+
+                count++;
+            }
+            catch(const std::exception &e)
+            {
+                std::cout << "error: " << e.what() << "\n";
+            }
+        }
+    }
+}
+
+void Trokam::InfoStore::getSequences(const std::string &partial,
+                                           Trokam::Bundle<Trokam::Sequence> &results)
+{}
+
+void Trokam::InfoStore::getPages(const std::vector<int> seqIndex,
+                                 Trokam::Bundle<Trokam::Page> &results)
+{
+    std::string sentence;
+    sentence += "SELECT page.index, page.protocol, domain.value, page.path, page_seq.relevance_total ";
+    sentence += "FROM page, page_seq, sequence, domain ";
+    sentence += "WHERE page.index=page_seq.index_page ";
+    sentence += "AND sequence.index=page_seq.index_sequence ";
+    sentence += "AND page.index_domain=domain.index ";
+    sentence += "AND ((sequence.index=1070732)) ";
+    sentence += "ORDER BY relevance_total DESC ";
+    sentence += "LIMIT 10 ";
+}
+
+void Trokam::InfoStore::fillProtocol()
+{
+    std::string sentenceInsert;
+
+    try
+    {
+        sentenceInsert=  "INSERT INTO protocol(index, value) ";
+        sentenceInsert+= "VALUES(" + std::to_string(INDEX_HTTP) + ", '" + HTTP + "');";
+        db.execSql(sentenceInsert);
+    }
+    catch(...)
+    {}
+
+    try
+    {
+        sentenceInsert=  "INSERT INTO protocol(index, value) ";
+        sentenceInsert+= "VALUES(" + std::to_string(INDEX_HTTPS) + ", '" + HTTPS + "');";
+        db.execSql(sentenceInsert);
+    }
+    catch(...)
+    {}
+}
+
+bool Trokam::InfoStore::insertDomainToIndex(const std::string &text)
+{
+    return insertDomain(text, DOMAIN_INDEX);
+}
+
+bool Trokam::InfoStore::insertSeedPage(const std::string &text)
+{
+    return insertPage(text, 0, PAGE_REJECT);
+}
+
+bool Trokam::InfoStore::insertPageToIndex(const std::string &text)
+{
+    return insertPage(text, 0, PAGE_INDEX);
+}
+
+/// ======================= P R I V A T E ==============================
+
 
 int Trokam::InfoStore::getDomainIndex(const std::string &domain)
 {
-    int index= -1;
+    int index = -1;
 
     std::string sentence;
     sentence=  "SELECT index ";
     sentence+= "FROM domain ";
     sentence+= "WHERE value='" + domain + "' ";
 
-    boost::scoped_ptr<pqxx::result> answer;
+    pqxx::result answer;
     db.execSql(sentence, answer);
 
-    pqxx::result::const_iterator col= answer->begin();
-    if(col != answer->end())
+    pqxx::result::const_iterator row = answer.begin();
+    if (row != answer.end())
     {
-        index= col[0].as(int());
+        index= row[0].as(int());
     }
     else
     {
-        std::string sentence;
-        sentence+= "INSERT INTO domain(value, type) ";
-        sentence+= "VALUES('" + domain + "', 0) ";
-        sentence+= "RETURNING index ";
-
-        boost::scoped_ptr<pqxx::result> answer;
-        db.execSql(sentence, answer);
-
-        pqxx::result::const_iterator col= answer->begin();
-        if(col != answer->end())
-        {
-            index= col[0].as(int());
-        }
+        index = insertDomain(domain, DOMAIN_REJECT);
     }
     return index;
 }
 
+int Trokam::InfoStore::insertDomain(const std::string &text,
+                                    const int &type)
+{
+    int index = -1;
+
+    std::string sentence;
+    sentence+= "INSERT INTO domain(value, type) ";
+    sentence+= "VALUES('" + text + "', ";
+    sentence+= std::to_string(type) + ") ";
+    sentence+= "RETURNING index ";
+
+    pqxx::result answer;
+    db.execSql(sentence, answer);
+
+    pqxx::result::const_iterator row = answer.begin();
+    if(row != answer.end())
+    {
+        index= row[0].as(int());
+    }
+
+    return index;
+}
+
+int Trokam::InfoStore::getProtocolIndex(const std::string &protocol)
+{
+    if (protocol == HTTP )
+    {
+        return INDEX_HTTP;
+    }
+
+    if (protocol == HTTPS )
+    {
+        return INDEX_HTTPS;
+    }
+
+    return -1;
+}
+
 void Trokam::InfoStore::insertSequences(const int &pageIndex,
-                                        const Trokam::TextStore &bag)
+                                              Trokam::TextStore &bag)
 {
-    std::cout << "inserting sequences relevance by page ...\n";
+    std::cout << "inserting sequences ...\n";
 
-    try
+    int count= 0;
+
+    std::cout << "bag.size: " << bag.size() << "\n";
+
+    for(int i=0; i<bag.size(); i++)
     {
-        std::vector<std::string> bundle;
-        for(int i=0; i<bag.size(); i++)
+        const TextOcc to= bag.get(i);
+        if (count < SEQUENCE_LIMIT)
         {
-            const TextOcc to= bag.get(i);
-            if(to.relevanceTotal >= RELEVANCE_THRESHOLD)
+            try
             {
-                const std::string sentence= generateSentenceOccInPage(pageIndex, to);
-                bundle.push_back(sentence);
+                std::string sentence;
+                sentence=  "SELECT index ";
+                sentence+= "FROM sequence ";
+                sentence+= "WHERE value='" + to.text + "' ";
+
+                pqxx::result answer;
+                db.execSql(sentence, answer);
+
+                pqxx::result::iterator row = answer.begin();
+                if (row != answer.end())
+                {
+                    int index= row[0].as(int());
+                    bag[i].index = index;
+
+                    int seconds= std::time(nullptr);
+
+                    /**
+                     * Update the count of the sequence.
+                     **/
+                    std::string sentenceUpdate;
+                    sentenceUpdate=  "UPDATE sequence ";
+                    sentenceUpdate+= "SET count=count+" + std::to_string(to.occurrence) + ", ";
+                    sentenceUpdate+= "modified=" + std::to_string(seconds) + " ";
+                    sentenceUpdate+= "WHERE index=" + std::to_string(index);
+                    db.execSql(sentenceUpdate);
+                }
+                else
+                {
+                    try
+                    {
+                        int seconds= std::time(nullptr);
+
+                        /**
+                         * Insert the new sequence and get its index.
+                         **/
+                        std::string sentenceInsert;
+                        sentenceInsert=  "INSERT INTO sequence(value, count, modified) ";
+                        sentenceInsert+= "VALUES('" + to.text + "', ";
+                        sentenceInsert+= std::to_string(to.occurrence) + ", ";
+                        sentenceInsert+= std::to_string(seconds) + ") ";
+                        sentenceInsert+= "RETURNING index ";
+                        pqxx::result answer;
+                        db.execSql(sentenceInsert, answer);
+
+                        pqxx::result::iterator row = answer.begin();
+                        if(row != answer.end())
+                        {
+                            int index= row[0].as(int());
+
+                            /**
+                             * Keep the index.
+                             **/
+                            bag[i].index = index;
+                        }
+                    }
+                    catch(const pqxx::sql_error &e)
+                    {
+                        std::cout << "error: " << e.what() << "\n";
+                    }
+                }
             }
-        }
-        db.execSql(bundle);
-        std::cout << "inserted: " << bundle.size() << " sequences.\n";
-    }
-    catch(const pqxx::sql_error &e)
-    {
-        msg.showSqlError(e);
-    }
-}
-
-void Trokam::InfoStore::insertSequenceOccurrence(const Trokam::TextStore &bag)
-{
-    std::cout << "inserting sequence occurrence ...\n";
-
-    try
-    {
-        std::vector<std::string> bundle;
-        for(int i=0; i<bag.size(); i++)
-        {
-            const TextOcc to= bag.get(i);
-            if(to.relevanceTotal >= RELEVANCE_THRESHOLD)
+            catch(const pqxx::sql_error &e)
             {
-                const std::string sentence= generateSentenceInsertSeqOcc(to);
-                bundle.push_back(sentence);
+                std::cout << "error: " << e.what() << "\n";
             }
-        }
-        db.execSql(bundle);
-        std::cout << "inserting: " << bundle.size() << " sequences and occurrences.\n";
-    }
-    catch(const pqxx::sql_error &e)
-    {
-        msg.showSqlError(e);
-    }
-}
 
-void Trokam::InfoStore::updateSequenceOccurrence(const Trokam::TextStore &bag)
-{
-    std::cout << "updating sequence occurrence ...\n";
-
-    try
-    {
-        std::vector<std::string> bundle;
-        for(int i=0; i<bag.size(); i++)
-        {
-            const TextOcc to= bag.get(i);
-            if(to.relevanceTotal >= RELEVANCE_THRESHOLD)
-            {
-                const std::string sentence= generateSentenceUpdateOcc(to);
-                bundle.push_back(sentence);
-            }
+            count++;
         }
-        db.execSql(bundle);
-        std::cout << "updated: " << bundle.size() << " sequences.\n";
     }
-    catch(const pqxx::sql_error &e)
-    {
-        msg.showSqlError(e);
-    }
+    std::cout << "sequences inserted: " << count << "\n";
 }
 
 void Trokam::InfoStore::insertTraits(const int &index,
@@ -306,48 +509,49 @@ void Trokam::InfoStore::insertTraits(const int &index,
 
     try
     {
-        std::string sentence;
-        sentence=  "DELETE FROM trait ";
-        sentence+= "WHERE index_page=" + std::to_string(index);
-        db.execSql(sentence);
+        std::string selectSentence;
+        selectSentence=  "SELECT index_page ";
+        selectSentence+= "FROM trait ";
+        selectSentence+= "WHERE index_page=" + std::to_string(index);
 
-        sentence=  "INSERT INTO trait ";
-        sentence+= "VALUES (";
-        sentence+= std::to_string(index) + ", ";
-        sentence+= "'" + info.title + "', ";
-        sentence+= std::to_string(info.content.length()) + ", ";
-        sentence+= std::to_string(info.complexity) + ") ";
-        db.execSql(sentence);
+        pqxx::result answerIndex;
+        db.execSql(selectSentence, answerIndex);
+
+        pqxx::result::iterator it= answerIndex.begin();
+        if(it == answerIndex.end())
+        {
+            /**
+             * Insert a new row.
+             **/
+            std::string sentence;
+            sentence=  "INSERT INTO trait ";
+            sentence+= "VALUES (";
+            sentence+= std::to_string(index) + ", ";
+            sentence+= "'" + info.title + "', ";
+            sentence+= std::to_string(info.content.length()) + ", ";
+            sentence+= std::to_string(info.complexity) + ", ";
+            sentence+= "'" + info.urlForwarded + "') ";
+            db.execSql(sentence);
+        }
+        else
+        {
+            /**
+             * Update the row.
+             **/
+            std::string sentence;
+            sentence=  "UPDATE trait ";
+            sentence+= "SET(title, content_size, complexity, forwarded)=(";
+            sentence+= "'" + info.title + "', ";
+            sentence+= std::to_string(info.content.length()) + ", ";
+            sentence+= std::to_string(info.complexity) + ", ";
+            sentence+= "'" + info.urlForwarded + "') ";
+            sentence+= "WHERE index_page=" + std::to_string(index);
+            db.execSql(sentence);
+        }
     }
     catch(const pqxx::sql_error &e)
     {
-        msg.showSqlError(e);
-    }
-}
-
-void Trokam::InfoStore::insertUrls(const std::string &links,
-                                   const int &level)
-{
-    std::cout << "inserting urls ...\n";
-
-    std::istringstream input(links);
-    for(std::string line; std::getline(input, line);)
-    {
-        /**
-         * Trimming unwanted characters.
-         **/
-        boost::algorithm::trim_if(line, boost::algorithm::is_any_of(" \n\r\""));
-
-        /**
-         * Verify that it starts with http or https.
-         **/
-        const std::string first7= line.substr(0, 7);
-        const std::string first8= line.substr(0, 8);
-
-        if((first7==HTTP) || (first8==HTTPS))
-        {
-            insertPage(line, level);
-        }
+        std::cerr << "error: " << e.what() << "\n";
     }
 }
 
@@ -357,9 +561,9 @@ void Trokam::InfoStore::insertUrls(const Trokam::DifferentStrings &links,
     std::cout << "inserting urls ...";
 
     int count= 0;
-    for(int i= 0; ((i<links.size()) && (i<URL_LIMIT)); i++)
+    for(int i= 0; ((i<links.size()) && (i<DOMAIN_URL_LIMIT)); i++)
     {
-        insertPage(links.get(i), level);
+        insertPage(links.get(i), level, PAGE_REJECT);
         count++;
     }
 
@@ -369,16 +573,10 @@ void Trokam::InfoStore::insertUrls(const Trokam::DifferentStrings &links,
 void Trokam::InfoStore::insertUrls(const Trokam::PageInfo &page,
                                    const int &level)
 {
-    std::cout << "inserting urls ...";
-
-    if(page.domainType == DOMAIN_NO_INSERT)
-    {
-        std::cout << "domain not enabled to insert URLs\n";
-        return;
-    }
+    std::cout << "inserting urls ...\n";
 
     int count= 0;
-    for(int i= 0; ((i<page.urlBag.size()) && (i<URL_LIMIT)); i++)
+    for(int i= 0; ((i<page.urlBag.size()) && (i<DOMAIN_URL_LIMIT)); i++)
     {
         try
         {
@@ -386,47 +584,66 @@ void Trokam::InfoStore::insertUrls(const Trokam::PageInfo &page,
             if(Trokam::TextProcessing::splitUrl(page.urlBag.get(i), protocol, domain, path))
             {
                 int domainIndex= getDomainIndex(domain);
+                int protocolIndex= getProtocolIndex(protocol);
+                int seconds= std::time(nullptr);
 
-                if((page.domainType == DOMAIN_INSERT_ALL) ||
-                   ((page.domainType == DOMAIN_INSERT_SAME) && (page.domainIndex == domainIndex)))
+                bool simpleUrl = true;
+                if (path.find("?lang") !=  std::string::npos)
+                {
+                    simpleUrl = false;
+                }
+
+                if (path.find("action=edit") !=  std::string::npos)
+                {
+                    simpleUrl = false;
+                }
+
+                const bool domainIndexing = (page.domainType == DOMAIN_INDEX) &&
+                                            (page.domainIndex == domainIndex) &&
+                                            (count < DOMAIN_URL_LIMIT) &&
+                                            simpleUrl;
+
+                const bool pageIndexing = (page.pageType == PAGE_INDEX) &&
+                                          (count < PAGE_URL_LIMIT) &&
+                                          simpleUrl;
+
+                if (domainIndexing || pageIndexing)
                 {
                     std::string sentence;
-                    sentence=  "INSERT INTO page ";
+                    sentence=  "INSERT INTO page(index_protocol, \
+                                                 index_domain, \
+                                                 path, \
+                                                 level, \
+                                                 processing, \
+                                                 crunched, \
+                                                 state, \
+                                                 type, \
+                                                 inserted) ";
                     sentence+= "VALUES (";
-                    sentence+= "DEFAULT, ";
-                    sentence+= "'" + protocol + "', ";
+                    sentence+= std::to_string(protocolIndex) + ", ";
                     sentence+= std::to_string(domainIndex) + ", ";
                     sentence+= "'" + path + "', ";
                     sentence+= std::to_string(level) + ", ";
                     sentence+= "false, ";
-                    sentence+= "'" + OUT_OF_TIME + "', ";
-                    sentence+=  std::to_string(UNKNOWN) + " ";
+                    sentence+= std::to_string(0) + ", ";
+                    sentence+= std::to_string(UNKNOWN) + ", ";
+                    sentence+= std::to_string(PAGE_REJECT) + ", ";
+                    sentence+= std::to_string(seconds);
                     sentence+= ") ";
+                    sentence+= "ON CONFLICT ON CONSTRAINT page_unique DO NOTHING;";
                     db.execSql(sentence);
-
-                    // std::cout << "domain allowed to insert URLs from domain: " << domain << "\n";
 
                     count++;
                 }
                 else
                 {
-                    // std::cout << "domain not enabled to insert URLs from domain: " << domain << "\n";
+                    /// std::cout << "not alloweded to insert URLs from domain: " << domain << "\n";
                 }
             }
         }
-        catch(const pqxx::sql_error &e)
+        catch(const std::exception &e)
         {
-            /**
-             * Only if the error is different to 'duplicate key value
-             * violates unique constraint page_unique' is shown.
-             * Duplicate URLs are fairly common and they occurrence
-             * are not a failure.
-             **/
-            const std::string error(e.what());
-            if(error.find(PAGE_UNIQUE) ==  std::string::npos)
-            {
-                msg.showSqlError(e);
-            }
+            std::cerr << "error: " << e.what() << "\n";
         }
     }
 
@@ -436,7 +653,7 @@ void Trokam::InfoStore::insertUrls(const Trokam::PageInfo &page,
 
 void Trokam::InfoStore::savePageContent(const int &index, const std::string &value)
 {
-    std::cout << "saving content ...\n";
+    std::cout << "saving content, page index: " << index << "\n";
 
     std::string directory, file;
     getDirFile(index, directory, file);
@@ -449,12 +666,14 @@ void Trokam::InfoStore::savePageContent(const int &index, const std::string &val
 void Trokam::InfoStore::setCrunched(const int &index,
                                     const Trokam::PageInfo &info)
 {
-    std::cout << "setting crunched ...\n";
+    std::cout << "setting crunched, page index: " << index << "\n";
+
+    int seconds= std::time(nullptr);
 
     std::string sentence;
     sentence=  "UPDATE page ";
     sentence+= "SET processing=false, ";
-    sentence+= "crunched=(SELECT current_date), ";
+    sentence+= "crunched=" + std::to_string(seconds) + ", ";
     sentence+= "state=" + std::to_string(SUCCESS) + " ";
     sentence+= "WHERE index=(" + std::to_string(index) + ") ";
     db.execSql(sentence);
@@ -463,12 +682,14 @@ void Trokam::InfoStore::setCrunched(const int &index,
 void Trokam::InfoStore::setPageState(const int &index,
                                      const int &error)
 {
-    std::cout << "setting page state ...\n";
+    std::cout << "setting page state, page index: " << index << "\n";
+
+    int seconds= std::time(nullptr);
 
     std::string sentence;
     sentence=  "UPDATE page ";
     sentence+= "SET processing=false, ";
-    sentence+= "crunched=(SELECT current_date), ";
+    sentence+= "crunched=" + std::to_string(seconds) + ", ";
     sentence+= "state=" + std::to_string(error) + " ";
     sentence+= "WHERE index=(" + std::to_string(index) + ") ";
     db.execSql(sentence);
@@ -487,60 +708,60 @@ void Trokam::InfoStore::getDirFile(const int &index,
     file= directory + SLASH + filename;
 }
 
-void Trokam::InfoStore::deleteSeqOccOfPage(const int &pageIndex)
+void Trokam::InfoStore::getFileSnippet(const std::string &terms,
+                                       const int &pageIndex,
+                                             std::string &snippet)
 {
-    std::string sentence;
-    sentence=  "DELETE FROM sequence ";
-    sentence+= "WHERE index=" + std::to_string(pageIndex);
-    db.execSql(sentence);
+    std::string directory;
+    std::string file;
+    getDirFile(pageIndex, directory, file);
+
+    std::cout << "filename: " << file << "\n";
+
+    std::string content;
+    Trokam::FileOps::read(file, content);
+
+    std::size_t loc= content.find(terms);
+    if(loc != std::string::npos)
+    {
+        std::cout << "terms found at: " << loc << "\n";
+
+        std::size_t ini= 0;
+        std::size_t count= 400;
+
+        if(loc > 200)
+        {
+            ini = loc - 200;
+        }
+
+        snippet = content.substr(ini, count);
+        const std::string strongText= "<strong>" + terms + "</strong>";
+        boost::replace_all(snippet, terms, strongText);
+    }
+    else
+    {
+        std::cout << "terms not found\n";
+        snippet = content.substr(0, 400);
+    }
+
+    boost::replace_all(snippet, "___________", "");
+    boost::replace_all(snippet, "_____", "");
+    boost::replace_all(snippet, "__", "");
 }
 
-std::string Trokam::InfoStore::generateSentenceOccInPage(const int &pageIndex,
-                                                         const Trokam::TextOcc &to)
+void Trokam::InfoStore::setAllNotProcessing()
 {
-    std::string sentence;
-    sentence=  "WITH s AS ( ";
-    sentence+= "SELECT index ";
-    sentence+= "FROM sequence ";
-    sentence+= "WHERE value = '" + to.text + "' ";
-    sentence+= "), i as ( ";
-    sentence+= "INSERT INTO sequence(\"value\") ";
-    sentence+= "SELECT '" + to.text + "' ";
-    sentence+= "WHERE NOT EXISTS (SELECT 1 FROM s) ";
-    sentence+= "RETURNING index ";
-    sentence+= "), ";
-    sentence+= "m AS (SELECT index FROM i UNION ALL ";
-    sentence+= "SELECT index FROM s) ";
-    sentence+= "INSERT INTO page_seq VALUES (" + std::to_string(pageIndex) + ", ";
-    sentence+= "(SELECT index FROM m), ";
-    sentence+= "1, ";
-    sentence+= std::to_string(to.occurrence) + ", ";
-    sentence+= std::to_string(to.relevanceInBody) + ", ";
-    sentence+= std::to_string(to.relevanceInUrl) + ", ";
-    sentence+= std::to_string(to.relevanceInTitle) + ", ";
-    sentence+= std::to_string(to.relevanceTotal) + ") ";
-    return sentence;
-}
+    std::cout << __PRETTY_FUNCTION__ << std::endl;
 
-std::string Trokam::InfoStore::generateSentenceInsertSeqOcc(const Trokam::TextOcc &to)
-{
-    std::string sentence;
-    sentence=  "WITH s AS (SELECT index FROM sequence WHERE value= '" +  to.text + "') ";
-    sentence+= "INSERT INTO seq_occ(\"index_sequence\", \"index_period\", \"count\") ";
-    sentence+= "VALUES ((SELECT index FROM s), 1, 0) ";
-    sentence+= "ON CONFLICT ON CONSTRAINT unique_seq_occ DO NOTHING";
-    return sentence;
-}
-
-std::string Trokam::InfoStore::generateSentenceUpdateOcc(const Trokam::TextOcc &to)
-{
-    std::string sentence;
-    sentence=  "UPDATE seq_occ ";
-    sentence+= "SET count = count + " + std::to_string(to.occurrence) + " ";
-    sentence+= "FROM sequence, period ";
-    sentence+= "WHERE seq_occ.index_sequence=sequence.index ";
-    sentence+= "AND seq_occ.index_period=period.index ";
-    sentence+= "AND period.index=1 ";
-    sentence+= "AND sequence.value='" + to.text + "' ";
-    return sentence;
+    try
+    {
+        std::string sentence;
+        sentence=  "UPDATE page ";
+        sentence+= "SET processing=false ";
+        db.execSql(sentence);
+    }
+    catch(const pqxx::sql_error &e)
+    {
+        std::cerr << "error: " << e.what() << "\n";
+    }
 }

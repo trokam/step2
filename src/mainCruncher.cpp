@@ -1,6 +1,6 @@
 /***********************************************************************
  *                            T R O K A M
- *                         Fair Search Engine
+ *                       Internet Search Engine
  *
  * Copyright (C) 2018, Nicolas Slusarenko
  *                     nicolas.slusarenko@trokam.com
@@ -36,11 +36,14 @@
  **/
 int main(int argc, const char* argv[])
 {
+    std::cout << "config file: " << CONFIG_FILE << "\n";
+
     /**
      * Command options could be read from command line and a file.
      **/
     Trokam::Options opt(argc, argv);
     opt.readSettings(CONFIG_FILE);
+    int state= 0;
 
     try
     {
@@ -52,7 +55,7 @@ int main(int argc, const char* argv[])
         /**
          * Execue the web cruncher.
          **/
-        c.run();
+        state= c.run();
     }
     catch(const int &e)
     {
@@ -63,4 +66,7 @@ int main(int argc, const char* argv[])
      * Cleaning up.
      **/
     opt.deleteWorkingDirectory();
+
+    std::cout << "exit state is: " << state << "\n";
+    return state;
 }

@@ -1,6 +1,6 @@
 /***********************************************************************
  *                            T R O K A M
- *                         Fair Search Engine
+ *                       Internet Search Engine
  *
  * Copyright (C) 2018, Nicolas Slusarenko
  *                     nicolas.slusarenko@trokam.com
@@ -29,6 +29,7 @@
  **/
 
 const std::string CONFIG_FILE= "/usr/local/etc/trokam.cfg";
+const std::string CLUSTER_FILE= "/usr/local/etc/cluster.cfg";
 
 /**
  * Processing parameters.
@@ -37,11 +38,21 @@ const std::string CONFIG_FILE= "/usr/local/etc/trokam.cfg";
 const int SEQUENCE_SIZE =             5;
 const int WORDS_LIMIT =            5000;
 const int TEXT_LIMIT =    4*WORDS_LIMIT;
-const int RELEVANCE_THRESHOLD=      100;
-const int URL_LIMIT =               330;
-const int DOMAIN_NO_INSERT =          0;
-const int DOMAIN_INSERT_SAME =        1;
-const int DOMAIN_INSERT_ALL =         2;
+const int SEQUENCE_LIMIT =           12;
+const int RELEVANCE_THRESHOLD=      400;
+
+const int DOMAIN_URL_LIMIT =        100;
+const int PAGE_URL_LIMIT =          100;
+
+const int DOMAIN_INDEX =              1;
+const int DOMAIN_REJECT =             2;
+
+const int PAGE_INDEX =                3;
+const int PAGE_REJECT =               4;
+
+const int DOMAIN_INDEXED =            3;
+const int INDEX_HTTP =                1;
+const int INDEX_HTTPS =               2;
 
 /**
  * Database IDs.
@@ -49,20 +60,28 @@ const int DOMAIN_INSERT_ALL =         2;
 
 const int DB_TEXT_SEARCH =            7;
 const int DB_CONTROL =               11;
+const int DB_DEPOT =                 13;
 
 /**
  * String literals.
  **/
 
-const std::string HTTP =           "http://";
-const std::string HTTPS =          "https://";
-const std::string SLASH =          "/";
-const std::string OUT_OF_TIME =    "2000-01-01";
-const std::string EMPTY =          "";
-const std::string HTML =           "text/html";
-const std::string WEB_SITE_ADDR =  "http://project.trokam.com/";
-const std::string WEB_SITE_NAME =  "Trokam Project";
-const std::string PAGE_UNIQUE =    "page_unique";
+const std::string HTTP =             "http://";
+const std::string HTTPS =            "https://";
+const std::string SLASH =            "/";
+const std::string EMPTY =            "";
+
+const std::string HTML =             "text/htm";
+const std::string XML =              "text/xml";
+
+const std::string PAGE_UNIQUE =      "page_unique";
+const std::string SEQ =              "seq:";
+const std::string TEXT_DB =          "textDB";
+
+const std::string VOID =             "(void)";
+
+const std::string PAGE_CRUNCHER =    "page_cruncher";
+const std::string DOMAIN_CRUNCHER =  "domain_cruncher";
 
 /**
  * Warnings
@@ -93,12 +112,5 @@ const int TYPE_NOT_SUPPORTED =           3;
 const int EXTRACTING_CONTENT_FAIL =      4;
 const int EXTRACTING_LINKS_FAIL =        5;
 const int COULD_NOT_CONNECT_TO_DATABASE= 6;
-
-/**
- * CCS location.
- **/
-
-const std::string BOOTSTRAP_MIN_CCS =         "https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css";
-const std::string BOOTSTRAP_THEME_MIN_CCS =   "https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css";
 
 #endif /// TROKAM_COMMON_H

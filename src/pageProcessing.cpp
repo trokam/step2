@@ -1,6 +1,6 @@
 /***********************************************************************
  *                            T R O K A M
- *                         Fair Search Engine
+ *                       Internet Search Engine
  *
  * Copyright (C) 2018, Nicolas Slusarenko
  *                     nicolas.slusarenko@trokam.com
@@ -37,8 +37,17 @@ void Trokam::PageProcessing::extractPageInfo(Trokam::PageInfo &info)
     const int textLength= Trokam::TextProcessing::extractSequences(info.content, info.sequences);
     Trokam::TextProcessing::extractURLs(info.links, info.urlBag);
     computeComplexity(info);
-    info.sequences.setRelevance(textLength, info.title, info.url);
-    info.sequences.show(5);
+
+    if (info.urlForwarded != VOID)
+    {
+        info.sequences.setRelevance(textLength, info.title, info.urlForwarded);
+    }
+    else
+    {
+        info.sequences.setRelevance(textLength, info.title, info.urlOrigin);
+    }
+
+    info.sequences.show();
 }
 
 

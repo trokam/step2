@@ -1,9 +1,11 @@
 /***********************************************************************
  *                            T R O K A M
- *                         Fair Search Engine
+ *                       Internet Search Engine
  *
- * Copyright (C) 2018, Nicolas Slusarenko
+ * Copyright (C) 2017, Nicolas Slusarenko
  *                     nicolas.slusarenko@trokam.com
+ *
+ * Copyright (C) 2017, Emweb bvba, Heverlee, Belgium.
  *
  * This file is part of Trokam.
  *
@@ -22,19 +24,49 @@
  **********************************************************************/
 
 /// Wt
-#include <Wt/WFlags.h>
 #include <Wt/WHBoxLayout.h>
 #include <Wt/WMenu.h>
 #include <Wt/WNavigationBar.h>
-#include <Wt/WLineEdit.h>
-#include <Wt/WPopupMenu.h>
-#include <Wt/WPushButton.h>
 #include <Wt/WStackedWidget.h>
 #include <Wt/WText.h>
 #include <Wt/WVBoxLayout.h>
 
 /// Trokam
+#include "aboutWidget.h"
+#include "searchWidget.h"
+#include "ackWidget.h"
+#include "donWidget.h"
+#include "topWindow.h"
+
+// ---------------------------------------
+
+/// Boost
+#include <boost/algorithm/string.hpp>
+#include <boost/thread.hpp>
+
+/// Wt
+#include <Wt/WApplication.h>
+#include <Wt/WComboBox.h>
+#include <Wt/WFlags.h>
+#include <Wt/WHBoxLayout.h>
+#include <Wt/WImage.h>
+#include <Wt/WMenu.h>
+#include <Wt/WModelIndex.h>
+#include <Wt/WNavigationBar.h>
+#include <Wt/WLineEdit.h>
+#include <Wt/WPopupWidget.h>
+#include <Wt/WPushButton.h>
+// #include <Wt/WSelectionBox.h>
+#include <Wt/WStackedWidget.h>
+#include <Wt/WString.h>
+#include <Wt/WText.h>
+#include <Wt/WVBoxLayout.h>
+
+/// Trokam
+#include "bundle.h"
 #include "common.h"
+#include "fileOps.h"
+#include "infoStore.h"
 #include "sharedResources.h"
 #include "topWindow.h"
 
@@ -42,34 +74,41 @@ Trokam::TopWindow::TopWindow(boost::shared_ptr<Trokam::SharedResources> &sr,
                              Wt::WApplication* app): Wt::WContainerWidget(),
                                                      application(app)
 {
-    resources= sr;
-    setOverflow(Wt::Overflow::Auto);
+    setOverflow(Wt::Overflow::Hidden);
 
     auto navigation = std::make_unique<Wt::WNavigationBar>();
-    navigation.get()->addStyleClass("navbar-inverse");
-    navigation.get()->setTitle("Trokam", WEB_SITE_ADDR);
-    navigation.get()->setResponsive(true);
+    navigation_ = navigation.get();
 
-    auto contentsStack = std::make_unique<Wt::WStackedWidget>();
+    navigation_->addStyleClass("main-nav");
+    navigation_->addStyleClass("navbar-inverse");
+    navigation_->setTitle("Trokam", "http://trokam.com/");
+    navigation_->setResponsive(true);
+
+    auto contentsStack= std::make_unique<Wt::WStackedWidget>();
+    contentsStack_ = contentsStack.get();
+
     Wt::WAnimation animation(Wt::AnimationEffect::Fade,
                              Wt::TimingFunction::Linear,
                              200);
-    contentsStack.get()->setTransitionAnimation(animation, true);
+    contentsStack_->setTransitionAnimation(animation, true);
 
     /**
-     * Setup the top-level menu
-     **/
-    auto menu = std::make_unique<Wt::WMenu>(contentsStack.get());
-    menu->setInternalPathEnabled("/");
+    * Setup the top-level menu
+    **/
+    auto menu = std::make_unique<Wt::WMenu>(contentsStack_);
+    menu->setInternalPathEnabled();
+    menu->setInternalBasePath("/");
+
+    addToMenu(menu.get(), Wt::WString::tr("search"),           std::make_unique<Trokam::SearchWidget>(sr, application));
+    addToMenu(menu.get(), Wt::WString::tr("about"),            std::make_unique<Trokam::AboutWidget>(sr, application));
+    addToMenu(menu.get(), Wt::WString::tr("acknowledgements"), std::make_unique<Trokam::AckWidget>(sr, application));
+    addToMenu(menu.get(), Wt::WString::tr("donate"),           std::make_unique<Trokam::DonWidget>(sr, application));
+
+    navigation_->addMenu(std::move(menu));
 
     /**
-     * Add each one of the menu items in the menu.
-     **/
-    navigation.get()->addMenu(std::move(menu));
-
-    /**
-     * Add it all inside a layout.
-     **/
+    * Add it all inside a layout
+    */
     auto layout = this->setLayout(std::make_unique<Wt::WVBoxLayout>());
     layout->setPreferredImplementation(Wt::LayoutImplementation::JavaScript);
     layout->addWidget(std::move(navigation), 0);
@@ -77,23 +116,50 @@ Trokam::TopWindow::TopWindow(boost::shared_ptr<Trokam::SharedResources> &sr,
     layout->setContentsMargins(0, 0, 0, 0);
 }
 
-Trokam::TopWindow::~TopWindow()
-{}
-
-void Trokam::TopWindow::addMenuItem(Wt::WMenu *menu,
-                                    const char *itemKey,
-		                            const char *contentsKey,
-                                    const char *path)
+Wt::WMenuItem *Trokam::TopWindow::addToMenu(Wt::WMenu *menu,
+					                        const Wt::WString& name,
+					                        std::unique_ptr<Trokam::PageWidget> topic)
 {
-    auto container = std::make_unique<Wt::WContainerWidget>();
+    auto topic_ = topic.get();
+    auto result = std::make_unique<Wt::WContainerWidget>();
 
-    container->setOverflow(Wt::Overflow::Auto);
-    container->addWidget(std::make_unique<Wt::WText>(Wt::WString::tr(contentsKey) +
-                                                     Wt::WString::tr("footlinks")));
+    auto pane = std::make_unique<Wt::WContainerWidget>();
+    auto pane_ = pane.get();
 
-    auto wrap = std::make_unique<Wt::WMenuItem>(Wt::WString::tr(itemKey),
-                                                std::move(container));
-    auto item = menu->addItem(std::move(wrap));
-    item->setPathComponent(path);
+    auto vAboutWidget = result->setLayout(std::make_unique<Wt::WVBoxLayout>());
+    vAboutWidget->setPreferredImplementation(Wt::LayoutImplementation::JavaScript);
+    vAboutWidget->setContentsMargins(0, 0, 0, 0);
+    vAboutWidget->addWidget(std::move(topic));
+    vAboutWidget->addWidget(std::move(pane), 1);
 
+    auto hAboutWidget = pane_->setLayout(std::make_unique<Wt::WHBoxLayout>());
+    hAboutWidget->setPreferredImplementation(Wt::LayoutImplementation::JavaScript);
+
+    auto item = std::make_unique<Wt::WMenuItem>(name, std::move(result));
+    item->setPathComponent(name.key());
+    auto item_ = menu->addItem(std::move(item));
+
+    auto subStack = std::make_unique<Wt::WStackedWidget>();
+    subStack->addStyleClass("contents");
+    subStack->setOverflow(Wt::Overflow::Auto);
+
+    Wt::WAnimation animation(Wt::AnimationEffect::Fade,
+                             Wt::TimingFunction::Linear,
+                             100);
+    subStack->setTransitionAnimation(animation, true);
+
+    auto subMenu = std::make_unique<Wt::WMenu>(subStack.get());
+    auto subMenu_ = subMenu.get();
+    subMenu_->addStyleClass("nav-pills nav-stacked submenu");
+    subMenu_->setWidth(200);
+
+    hAboutWidget->addWidget(std::move(subMenu));
+    hAboutWidget->addWidget(std::move(subStack),1);
+
+    subMenu_->setInternalPathEnabled();
+    subMenu_->setInternalBasePath("/" + item_->pathComponent());
+
+    topic_->populateSubMenu(subMenu_);
+
+    return item_;
 }

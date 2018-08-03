@@ -1,6 +1,6 @@
 /***********************************************************************
  *                            T R O K A M
- *                         Fair Search Engine
+ *                       Internet Search Engine
  *
  * Copyright (C) 2018, Nicolas Slusarenko
  *                     nicolas.slusarenko@trokam.com
@@ -28,7 +28,7 @@
 #include <string>
 
 /// Boost
-#include <boost/scoped_ptr.hpp>
+// #include <boost/scoped_ptr.hpp>
 
 /// Trokam
 #include "reporting.h"

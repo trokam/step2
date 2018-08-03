@@ -1,6 +1,6 @@
 /***********************************************************************
  *                            T R O K A M
- *                         Fair Search Engine
+ *                       Internet Search Engine
  *
  * Copyright (C) 2018, Nicolas Slusarenko
  *                     nicolas.slusarenko@trokam.com
@@ -26,11 +26,11 @@
 
 /// C++
 #include <string>
-
-/// Boost
-#include <boost/scoped_ptr.hpp>
+#include <vector>
 
 /// Trokam
+#include "bundle.h"
+#include "data.h"
 #include "reporting.h"
 #include "textProcessing.h"
 #include "pageProcessing.h"
@@ -38,10 +38,6 @@
 #include "options.h"
 #include "postgresql.h"
 
-/**
- * \brief
- *
- **/
 namespace Trokam
 {
     class InfoStore
@@ -50,22 +46,40 @@ namespace Trokam
 
             InfoStore(const Trokam::Options &value);
 
-            void getUrlForProcessing(int &index,
-                                     std::string &url,
-                                     int &level);
-
-            void getUrlForProcessing(Trokam::PageInfo &page,
-                                     int &level);
+            bool getUrlForProcessing(std::vector<Trokam::PageInfo> &pages,
+                                     int &level,
+                                     const int &periodBeginning);
 
             bool insertPage(const std::string &url,
-                            const int &level);
+                            const int &level,
+                            const int &type);
 
             void insertPage(const int &index,
                             const int &level,
-                            const Trokam::PageInfo &info);
+                                  Trokam::PageInfo &info);
 
             void setPageState(const int &index,
                               const int &error);
+
+            void getSequences(const std::string &partial,
+                                    Trokam::Bundle<Trokam::Sequence> &results);
+
+            void getPages(const std::vector<int> seqIndex,
+                          Trokam::Bundle<Trokam::Page> &results);
+
+            void getFileSnippet(const std::string &terms,
+                                const int &pageIndex,
+                                      std::string &snippet);
+
+            void fillProtocol();
+
+            bool insertDomainToIndex(const std::string &text);
+
+            bool insertSeedPage(const std::string &text);
+
+            bool insertPageToIndex(const std::string &text);
+
+            void setAllNotProcessing();
 
         private:
 
@@ -75,33 +89,25 @@ namespace Trokam
 
             int getDomainIndex(const std::string &domain);
 
+            int insertDomain(const std::string &text,
+                             const int &type);
+
+            int getProtocolIndex(const std::string &protocol);
+
             void insertSequences(const int &index,
-                                 const Trokam::TextStore &bag);
+                                       Trokam::TextStore &bag);
 
-            void insertSequenceOccurrence(const Trokam::TextStore &bag);
-
-            void updateSequenceOccurrence(const Trokam::TextStore &bag);
+            void insertSeqInPage(const int &pageIndex,
+                                       Trokam::TextStore &bag);
 
             void insertTraits(const int &index,
                               const Trokam::PageInfo &info);
-
-            void insertUrls(const std::string &links,
-                            const int &level);
 
             void insertUrls(const Trokam::DifferentStrings &links,
                             const int &level);
 
             void insertUrls(const Trokam::PageInfo &page,
                             const int &level);
-
-            void deleteSeqOccOfPage(const int &pageIndex);
-
-            std::string generateSentenceOccInPage(const int &pageIndex,
-                                                  const Trokam::TextOcc &to);
-
-            std::string generateSentenceInsertSeqOcc(const Trokam::TextOcc &to);
-
-            std::string generateSentenceUpdateOcc(const Trokam::TextOcc &to);
 
             void setCrunched(const int &pageIndex,
                              const Trokam::PageInfo &info);
@@ -112,6 +118,7 @@ namespace Trokam
             void getDirFile(const int &pageIndex,
                                   std::string &directory,
                                   std::string &file);
+
     };
 }
 

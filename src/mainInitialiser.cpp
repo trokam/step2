@@ -1,6 +1,6 @@
 /***********************************************************************
  *                            T R O K A M
- *                         Fair Search Engine
+ *                       Internet Search Engine
  *
  * Copyright (C) 2018, Nicolas Slusarenko
  *                     nicolas.slusarenko@trokam.com
@@ -44,7 +44,10 @@ int main(int argc, const char* argv[])
          * Initialise the database.
          **/
         Trokam::Initialiser ini(opt);
-        ini.fill();
+        ini.fillProtocol();
+        ini.fillDomainToIndex();
+        ini.fillSeedPages();
+        ini.fillPagesToIndex();
     }
     catch(const int &e)
     {

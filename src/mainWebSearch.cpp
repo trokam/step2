@@ -1,6 +1,6 @@
 /***********************************************************************
  *                            T R O K A M
- *                         Fair Search Engine
+ *                       Internet Search Engine
  *
  * Copyright (C) 2018, Nicolas Slusarenko
  *                     nicolas.slusarenko@trokam.com
@@ -32,6 +32,7 @@
 #include <appGenerator.h>
 #include <common.h>
 #include <options.h>
+#include "reporting.h"
 
 int main(int argc, char **argv)
 {

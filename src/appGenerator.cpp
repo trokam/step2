@@ -1,6 +1,6 @@
 /***********************************************************************
  *                            T R O K A M
- *                         Fair Search Engine
+ *                       Internet Search Engine
  *
  * Copyright (C) 2018, Nicolas Slusarenko
  *                     nicolas.slusarenko@trokam.com
@@ -18,9 +18,9 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with Trokam. If not, see <http://www.gnu.org/licenses/>. 
+ * along with Trokam. If not, see <http://www.gnu.org/licenses/>.
  **********************************************************************/
- 
+
 /// Wt
 #include <Wt/WApplication.h>
 #include <Wt/WBootstrapTheme.h>
@@ -45,7 +45,7 @@ std::unique_ptr<Wt::WApplication> Trokam::AppGenerator::createApplication(const 
      **/
     auto app = Wt::cpp14::make_unique<Wt::WApplication>(env);
 
-    Wt::log("info") << "appRoot: '" << app->appRoot() << "'";  
+    Wt::log("info") << "appRoot: '" << app->appRoot() << "'";
 
     /**
      * Verifying approot directory.
@@ -62,21 +62,27 @@ std::unique_ptr<Wt::WApplication> Trokam::AppGenerator::createApplication(const 
     bootstrapTheme->setVersion(Wt::BootstrapVersion::v3);
     bootstrapTheme->setResponsive(true);
     app->setTheme(bootstrapTheme);
-    app->useStyleSheet(Wt::WLink("http://project.trokam.com/docroot/style/bootstrap.css"));
-    app->useStyleSheet(Wt::WLink("http://project.trokam.com/docroot/style/moz-transitions.css"));
-    app->useStyleSheet(Wt::WLink("http://project.trokam.com/docroot/style/wt.css"));
-    app->useStyleSheet(Wt::WLink("http://project.trokam.com/docroot/style/bootstrap-theme.min.css"));
 
     /**
-     * Load the default bootstrap3 theme from the web.
+     * Customized Bootstrap 3 CCS.
      **/
-    app->useStyleSheet(Wt::WLink(BOOTSTRAP_MIN_CCS));
-    app->useStyleSheet(Wt::WLink(BOOTSTRAP_THEME_MIN_CCS));
+    app->useStyleSheet("/style/custom-bootstrap.css");
+    app->useStyleSheet("/style/custom-bootstrap.min.css");
+    app->useStyleSheet("/style/custom-bootstrap-theme.css");
+    app->useStyleSheet("/style/custom-bootstrap-theme.min.css");
+
+    /**
+     * Additional stylesheet.
+     **/
+    app->useStyleSheet("/style/trokam.css");
+    app->useStyleSheet("/style/layout.css");
 
     /**
      * Load text bundles.
      **/
-    app->messageResourceBundle().use(app->appRoot() + "trokam_project");
+    app->messageResourceBundle().use(app->appRoot() + "report");
+    app->messageResourceBundle().use(app->appRoot() + "text");
+    app->messageResourceBundle().use(app->appRoot() + "src");
 
     /**
      * Add the only one widget in the application layout.
@@ -89,17 +95,7 @@ std::unique_ptr<Wt::WApplication> Trokam::AppGenerator::createApplication(const 
     /**
      * Set web site title.
      **/
-    app->setTitle("Trokam Project");
-
-    /**
-     * Additional stylesheets.
-     **/
-    app->useStyleSheet(Wt::WLink("http://project.trokam.com/docroot/style/trokam.css"));
-    app->useStyleSheet(Wt::WLink("http://project.trokam.com/docroot/style/bootstrap.css"));
-    app->useStyleSheet(Wt::WLink("http://project.trokam.com/docroot/style/bootstrap.min.css"));
-    app->useStyleSheet(Wt::WLink("http://project.trokam.com/docroot/style/bootstrap-theme.css"));
-    app->useStyleSheet(Wt::WLink("http://project.trokam.com/docroot/style/bootstrap-theme.min.css"));
+    app->setTitle("Trokam Search Engine");
 
     return app;
 }
-

@@ -18,7 +18,9 @@
 -- DROP TABLE IF EXISTS public.sequence CASCADE;
 CREATE TABLE public.sequence(
 	index serial NOT NULL,
-	value varchar(200) NOT NULL,
+	value varchar(1000) NOT NULL,
+	count integer NOT NULL DEFAULT 0,
+	modified integer NOT NULL DEFAULT 0,
 	CONSTRAINT text_pkey PRIMARY KEY (index),
 	CONSTRAINT value_unique UNIQUE (value)
 
@@ -31,13 +33,15 @@ ALTER TABLE public.sequence OWNER TO postgres;
 -- DROP TABLE IF EXISTS public.page CASCADE;
 CREATE TABLE public.page(
 	index serial NOT NULL,
-	protocol varchar(10),
+	index_protocol smallint,
 	index_domain integer,
 	path varchar(1000),
 	level integer NOT NULL,
 	processing bool NOT NULL,
-	crunched date NOT NULL,
+	crunched integer NOT NULL,
 	state smallint NOT NULL,
+	type smallint NOT NULL,
+	inserted integer NOT NULL,
 	CONSTRAINT page_pkey PRIMARY KEY (index)
 
 );
@@ -48,10 +52,10 @@ ALTER TABLE public.page OWNER TO postgres;
 -- object: public.page_seq | type: TABLE --
 -- DROP TABLE IF EXISTS public.page_seq CASCADE;
 CREATE TABLE public.page_seq(
+	index serial NOT NULL,
 	index_page integer,
 	index_sequence integer,
-	index_period integer,
-	count integer NOT NULL,
+	seq_count integer NOT NULL,
 	relevance_in_body smallint NOT NULL,
 	relevance_in_url smallint NOT NULL,
 	relevance_in_title smallint NOT NULL,
@@ -81,7 +85,8 @@ CREATE TABLE public.trait(
 	index_page integer,
 	title varchar(1000) NOT NULL,
 	content_size integer NOT NULL,
-	complexity float NOT NULL
+	complexity float NOT NULL,
+	forwarded varchar(1000) NOT NULL
 );
 -- ddl-end --
 ALTER TABLE public.trait OWNER TO postgres;
@@ -97,60 +102,6 @@ ON DELETE SET NULL ON UPDATE CASCADE;
 -- object: trait_uq | type: CONSTRAINT --
 -- ALTER TABLE public.trait DROP CONSTRAINT IF EXISTS trait_uq CASCADE;
 ALTER TABLE public.trait ADD CONSTRAINT trait_uq UNIQUE (index_page);
--- ddl-end --
-
--- object: public.period | type: TABLE --
--- DROP TABLE IF EXISTS public.period CASCADE;
-CREATE TABLE public.period(
-	index serial NOT NULL,
-	start date NOT NULL,
-	CONSTRAINT period_pkey PRIMARY KEY (index)
-
-);
--- ddl-end --
-ALTER TABLE public.period OWNER TO postgres;
--- ddl-end --
-
--- object: public.seq_occ | type: TABLE --
--- DROP TABLE IF EXISTS public.seq_occ CASCADE;
-CREATE TABLE public.seq_occ(
-	index_sequence integer,
-	index_period integer,
-	count integer NOT NULL
-);
--- ddl-end --
-ALTER TABLE public.seq_occ OWNER TO postgres;
--- ddl-end --
-
--- object: sequence_fk | type: CONSTRAINT --
--- ALTER TABLE public.seq_occ DROP CONSTRAINT IF EXISTS sequence_fk CASCADE;
-ALTER TABLE public.seq_occ ADD CONSTRAINT sequence_fk FOREIGN KEY (index_sequence)
-REFERENCES public.sequence (index) MATCH FULL
-ON DELETE SET NULL ON UPDATE CASCADE;
--- ddl-end --
-
--- object: period_fk | type: CONSTRAINT --
--- ALTER TABLE public.seq_occ DROP CONSTRAINT IF EXISTS period_fk CASCADE;
-ALTER TABLE public.seq_occ ADD CONSTRAINT period_fk FOREIGN KEY (index_period)
-REFERENCES public.period (index) MATCH FULL
-ON DELETE SET NULL ON UPDATE CASCADE;
--- ddl-end --
-
--- object: period_fk | type: CONSTRAINT --
--- ALTER TABLE public.page_seq DROP CONSTRAINT IF EXISTS period_fk CASCADE;
-ALTER TABLE public.page_seq ADD CONSTRAINT period_fk FOREIGN KEY (index_period)
-REFERENCES public.period (index) MATCH FULL
-ON DELETE SET NULL ON UPDATE CASCADE;
--- ddl-end --
-
--- object: unique_page_text | type: CONSTRAINT --
--- ALTER TABLE public.page_seq DROP CONSTRAINT IF EXISTS unique_page_text CASCADE;
-ALTER TABLE public.page_seq ADD CONSTRAINT unique_page_text UNIQUE (index_page,index_sequence,index_period);
--- ddl-end --
-
--- object: unique_seq_occ | type: CONSTRAINT --
--- ALTER TABLE public.seq_occ DROP CONSTRAINT IF EXISTS unique_seq_occ CASCADE;
-ALTER TABLE public.seq_occ ADD CONSTRAINT unique_seq_occ UNIQUE (index_sequence,index_period);
 -- ddl-end --
 
 -- object: public.domain | type: TABLE --
@@ -174,19 +125,60 @@ REFERENCES public.domain (index) MATCH FULL
 ON DELETE SET NULL ON UPDATE CASCADE;
 -- ddl-end --
 
--- object: page_unique | type: CONSTRAINT --
--- ALTER TABLE public.page DROP CONSTRAINT IF EXISTS page_unique CASCADE;
-ALTER TABLE public.page ADD CONSTRAINT page_unique UNIQUE (protocol,index_domain,path);
+-- object: sequence_value_index | type: INDEX --
+-- DROP INDEX IF EXISTS public.sequence_value_index CASCADE;
+CREATE INDEX sequence_value_index ON public.sequence
+	USING btree
+	(
+	  value ASC NULLS LAST
+	);
 -- ddl-end --
 
--- object: public.command | type: TABLE --
--- DROP TABLE IF EXISTS public.command CASCADE;
-CREATE TABLE public.command(
-	run bool NOT NULL,
-	active bool NOT NULL
+-- object: public.protocol | type: TABLE --
+-- DROP TABLE IF EXISTS public.protocol CASCADE;
+CREATE TABLE public.protocol(
+	index smallint NOT NULL,
+	value varchar(10) NOT NULL,
+	CONSTRAINT protocol_pkey PRIMARY KEY (index)
+
 );
 -- ddl-end --
-ALTER TABLE public.command OWNER TO postgres;
+ALTER TABLE public.protocol OWNER TO postgres;
+-- ddl-end --
+
+-- object: protocol_fk | type: CONSTRAINT --
+-- ALTER TABLE public.page DROP CONSTRAINT IF EXISTS protocol_fk CASCADE;
+ALTER TABLE public.page ADD CONSTRAINT protocol_fk FOREIGN KEY (index_protocol)
+REFERENCES public.protocol (index) MATCH FULL
+ON DELETE SET NULL ON UPDATE CASCADE;
+-- ddl-end --
+
+-- object: page_unique | type: CONSTRAINT --
+-- ALTER TABLE public.page DROP CONSTRAINT IF EXISTS page_unique CASCADE;
+ALTER TABLE public.page ADD CONSTRAINT page_unique UNIQUE (index_protocol,index_domain,path);
+-- ddl-end --
+
+-- object: page_path_index | type: INDEX --
+-- DROP INDEX IF EXISTS public.page_path_index CASCADE;
+CREATE INDEX page_path_index ON public.page
+	USING btree
+	(
+	  path ASC NULLS LAST
+	);
+-- ddl-end --
+
+-- object: domain_value_index | type: INDEX --
+-- DROP INDEX IF EXISTS public.domain_value_index CASCADE;
+CREATE INDEX domain_value_index ON public.domain
+	USING btree
+	(
+	  value ASC NULLS LAST
+	);
+-- ddl-end --
+
+-- object: page_seq_unique | type: CONSTRAINT --
+-- ALTER TABLE public.page_seq DROP CONSTRAINT IF EXISTS page_seq_unique CASCADE;
+ALTER TABLE public.page_seq ADD CONSTRAINT page_seq_unique UNIQUE (index_page,index_sequence);
 -- ddl-end --
 
 

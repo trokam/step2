@@ -1,6 +1,6 @@
 /***********************************************************************
  *                            T R O K A M
- *                         Fair Search Engine
+ *                       Internet Search Engine
  *
  * Copyright (C) 2018, Nicolas Slusarenko
  *                     nicolas.slusarenko@trokam.com
@@ -46,23 +46,28 @@ namespace Trokam
     {
         public:
 
-            // Postgresql(const Trokam::Options &value);
             Postgresql(const Trokam::Options &value,
                        const int &id);
+
+            Postgresql(const std::string &host,
+                       const std::string &port,
+                       const std::string &name,
+                       const std::string &user,
+                       const std::string &pass);
 
             ~Postgresql();
 
             void execSql(const std::string &sentence);
 
             void execSql(const std::string &sentence,
-                         boost::scoped_ptr<pqxx::result> &answer);
+                               pqxx::result &answer);
 
             void execSql(std::vector<std::string> &bundle);
 
-            static void extract(const boost::scoped_ptr<pqxx::result> &answer,
+            static void extract(const pqxx::result &answer,
                                 int &value);
 
-            static void extract(const boost::scoped_ptr<pqxx::result> &answer,
+            static void extract(const pqxx::result &answer,
                                 bool &value);
 
         private:

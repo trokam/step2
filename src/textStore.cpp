@@ -1,6 +1,6 @@
 /***********************************************************************
  *                            T R O K A M
- *                         Fair Search Engine
+ *                       Internet Search Engine
  *
  * Copyright (C) 2018, Nicolas Slusarenko
  *                     nicolas.slusarenko@trokam.com
@@ -27,6 +27,7 @@
 #include <cmath>
 
 /// Trokam
+#include "common.h"
 #include "textStore.h"
 #include "textProcessing.h"
 
@@ -46,10 +47,13 @@ void Trokam::TextStore::insert(const std::string &text)
      **/
     for(std::vector<Trokam::TextOcc>::iterator it= textCollection.begin(); it!=textCollection.end(); ++it)
     {
-        if(text==it->text)
+        if(text.length() == it->text.length())
         {
-            it->occurrence++;
-            return;
+            if(text==it->text)
+            {
+                it->occurrence++;
+                return;
+            }
         }
     }
 
@@ -58,6 +62,7 @@ void Trokam::TextStore::insert(const std::string &text)
      * the collection. A new one is inserted.
      **/
     Trokam::TextOcc to;
+    to.index= -1;
     to.text= text;
     to.occurrence= 1;
     to.relevanceInBody= 1;
@@ -74,20 +79,26 @@ void Trokam::TextStore::show(const int &value)
         sorted= true;
     }
 
+    std::cout << "textCollection.size: " << textCollection.size() << "\n";
+
     int count= 0;
     for(std::vector<Trokam::TextOcc>::iterator it= textCollection.begin(); it!=textCollection.end(); ++it)
     {
-        std::string text= "[" + it->text + "]";
-        text= Trokam::TextProcessing::rightPadding(text, 50);
+        if (count < SEQUENCE_LIMIT)
+        {
+            std::string text= "[" + it->text + "]";
+            text= Trokam::TextProcessing::rightPadding(text, 70);
 
-        std::cout << "seq: " << text
-                  << "\tbody: [" << it->relevanceInBody
-                  << "]\turl: [" << it->relevanceInUrl
-                  << "]\ttitle: [" << it->relevanceInTitle
-                  << "]\ttotal: [" << it->relevanceTotal << "]\n";
-        count++;
+            std::cout << "seq: " << text
+                      << "count: [" << it->occurrence
+                      << "]\tbody: [" << it->relevanceInBody
+                      << "]\turl: [" << it->relevanceInUrl
+                      << "]\ttitle: [" << it->relevanceInTitle
+                      << "]\ttotal: [" << it->relevanceTotal << "]\n";
+            count++;
+        }
 
-        if(count > value)
+        if ((value != -1) && (count >= value))
         {
             return;
         }

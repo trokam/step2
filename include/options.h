@@ -1,6 +1,6 @@
 /***********************************************************************
  *                            T R O K A M
- *                         Fair Search Engine
+ *                       Internet Search Engine
  *
  * Copyright (C) 2018, Nicolas Slusarenko
  *                     nicolas.slusarenko@trokam.com
@@ -42,6 +42,8 @@ namespace Trokam
              */
             void readSettings(const std::string &filename);
 
+            std::string cruncherType() const;
+
             std::string dbHost() const;
             std::string dbName() const;
             std::string dbUser() const;
@@ -52,8 +54,16 @@ namespace Trokam
             std::string controlUser() const;
             std::string controlPass() const;
 
+            std::string depotHost() const;
+            std::string depotName() const;
+            std::string depotUser() const;
+            std::string depotPass() const;
+
             std::string workingDir() const;
+            std::string domainToIndexFile() const;
             std::string seedsFile() const;
+            std::string pagesToIndexFile() const;
+
             std::string contentDir() const;
             int pagesLimit() const;
             int level() const;
@@ -61,6 +71,8 @@ namespace Trokam
             void deleteWorkingDirectory();
 
         private:
+
+            std::string optCruncherType;
 
             std::string optDbHost;
             std::string optDbName;
@@ -72,8 +84,16 @@ namespace Trokam
             std::string optControlUser;
             std::string optControlPass;
 
+            std::string optDepotHost;
+            std::string optDepotName;
+            std::string optDepotUser;
+            std::string optDepotPass;
+
             std::string optWorkingDir;
+            std::string optDomainToIndexFile;
             std::string optSeedsFile;
+            std::string optPagesToIndexFile;
+
             std::string optContentDir;
             int optPagesLimit;
             int optLevel;
