@@ -52,6 +52,8 @@ Trokam::SearchWidget::SearchWidget(boost::shared_ptr<Trokam::SharedResources> &s
 {
     phraseOnFocus= -1;
 
+    addStyleClass("container-fluid");
+
     setDbTimeOut();
 
     /**
@@ -87,7 +89,7 @@ Trokam::SearchWidget::SearchWidget(boost::shared_ptr<Trokam::SharedResources> &s
     vbox->addWidget(std::move(brief));
 
     /**
-     * The box on which the results are displayed
+     * The box on which the results are displayed.
      **/
     auto subStack = std::make_unique<Wt::WStackedWidget>();
     subStack->addStyleClass("contents");
@@ -107,6 +109,11 @@ Trokam::SearchWidget::SearchWidget(boost::shared_ptr<Trokam::SharedResources> &s
     timer = app->root()->addChild(std::make_unique<Wt::WTimer>());
     timer->setInterval(std::chrono::milliseconds(750));
     timer->timeout().connect(this, &Trokam::SearchWidget::timeout);
+
+    /**
+     * Set the focus on the user input box.
+     **/
+    userInput->setFocus(true);
 }
 
 Trokam::SearchWidget::~SearchWidget()

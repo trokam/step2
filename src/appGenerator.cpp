@@ -62,6 +62,7 @@ std::unique_ptr<Wt::WApplication> Trokam::AppGenerator::createApplication(const 
     bootstrapTheme->setVersion(Wt::BootstrapVersion::v3);
     bootstrapTheme->setResponsive(true);
     app->setTheme(bootstrapTheme);
+    app->useStyleSheet("resources/themes/bootstrap/3/bootstrap-theme.min.css");
 
     /**
      * Customized Bootstrap 3 CCS.

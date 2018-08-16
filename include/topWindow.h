@@ -30,25 +30,12 @@
 #include <memory>
 #include <string>
 
-/// Boost
-#include <boost/lockfree/stack.hpp>
-#include <boost/shared_ptr.hpp>
-
 /// Wt
 #include <Wt/WApplication.h>
 #include <Wt/WContainerWidget.h>
 #include <Wt/WNavigationBar.h>
 #include <Wt/WMessageBox.h>
 #include <Wt/WMenu.h>
-
-/*
-#include <Wt/WPopupMenu.h>
-#include <Wt/WSuggestionPopup.h>
-#include <Wt/WStringListModel.h>
-#include <Wt/WEvent.h>
-#include <Wt/WTable.h>
-#include <Wt/WTimer.h>
-*/
 
 /// Trokam
 #include "bundle.h"
@@ -75,6 +62,10 @@ namespace Trokam
             Wt::WMenuItem *addToMenu(Wt::WMenu *menu,
                                      const Wt::WString& name,
                                      std::unique_ptr<Trokam::PageWidget> topic);
+
+            Wt::WMenuItem *addFrontPageToMenu(Wt::WMenu *menu,
+					                          const Wt::WString& name,
+					                          std::unique_ptr<Trokam::PageWidget> topic);
     };
 }
 
