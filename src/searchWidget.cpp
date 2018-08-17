@@ -32,8 +32,9 @@
 #include <Wt/WMenu.h>
 #include <Wt/WLineEdit.h>
 #include <Wt/WHBoxLayout.h>
-#include <Wt/WVBoxLayout.h>
+#include <Wt/WProgressBar.h>
 #include <Wt/WStackedWidget.h>
+#include <Wt/WVBoxLayout.h>
 #include <Wt/WText.h>
 #include <Wt/WTemplate.h>
 
@@ -61,6 +62,12 @@ Trokam::SearchWidget::SearchWidget(boost::shared_ptr<Trokam::SharedResources> &s
      **/
     std::unique_ptr<Wt::WVBoxLayout> vbox = std::make_unique<Wt::WVBoxLayout>();
     vbox->setPreferredImplementation(Wt::LayoutImplementation::JavaScript);
+
+    /**
+     * Information
+     **/
+    vbox->addWidget(std::make_unique<Wt::WTemplate>(Wt::WString::tr("general-info")));
+
 
     /**
      * Small logo, show after the first search.
@@ -100,9 +107,10 @@ Trokam::SearchWidget::SearchWidget(boost::shared_ptr<Trokam::SharedResources> &s
     subStack->addWidget(std::move(findingsBox));
     vbox->addWidget(std::move(subStack), 1);
 
-    vbox->itemAt(0)->widget()->setHidden(true);   /// Small logo
-    vbox->itemAt(1)->widget()->setHidden(false);  /// Big log
-    vbox->itemAt(3)->widget()->setHidden(false);  /// Brief intro
+    vbox->itemAt(0)->widget()->setHidden(false);  /// General Info
+    vbox->itemAt(1)->widget()->setHidden(true);   /// Small logo
+    vbox->itemAt(2)->widget()->setHidden(false);  /// Big log
+    vbox->itemAt(4)->widget()->setHidden(false);  /// Brief intro
 
     setLayout(std::move(vbox));
 
@@ -140,9 +148,10 @@ void Trokam::SearchWidget::keyPressedEntrance(const Wt::WKeyEvent &kEvent)
             phrasesPopup->setHidden(true);
         }
 
-        layout()->itemAt(0)->widget()->setHidden(false);
-        layout()->itemAt(1)->widget()->setHidden(true);
-        layout()->itemAt(3)->widget()->setHidden(true);
+        layout()->itemAt(0)->widget()->setHidden(true);   /// General Info
+        layout()->itemAt(1)->widget()->setHidden(false);  /// Small logo
+        layout()->itemAt(2)->widget()->setHidden(true);   /// Big log
+        layout()->itemAt(4)->widget()->setHidden(true);   /// Brief intro
 
         application->processEvents();
 
@@ -535,9 +544,16 @@ void Trokam::SearchWidget::phrasesPopupSelect(Wt::WMenuItem *item)
 
     phraseOnFocus= -1;
 
+    /*
     layout()->itemAt(0)->widget()->setHidden(false);
     layout()->itemAt(1)->widget()->setHidden(true);
     layout()->itemAt(3)->widget()->setHidden(true);
+    */
+
+    layout()->itemAt(0)->widget()->setHidden(true);   /// General Info
+    layout()->itemAt(1)->widget()->setHidden(false);  /// Small logo
+    layout()->itemAt(2)->widget()->setHidden(true);   /// Big log
+    layout()->itemAt(4)->widget()->setHidden(true);   /// Brief intro
 
     const std::string choice= item->text().toUTF8();
     userInput->setText(choice);
