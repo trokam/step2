@@ -50,7 +50,7 @@ Trokam::Cruncher::Cruncher(const Trokam::Options &value): settings(value),
 
     if (settings.cruncherType() == PAGE_CRUNCHER)
     {
-        PERIOD_SIZE = 60 * 60 * 12;
+        PERIOD_SIZE = 60 * 60 * 24 * 10;
         std::cout << "this is a *** PAGE *** cruncher.\n";
     }
     else if (settings.cruncherType() == DOMAIN_CRUNCHER)
@@ -170,7 +170,7 @@ void Trokam::Cruncher::process()
             level++;
             if (level > 5)
             {
-                exit(0);
+                exit(1);
             }
         }
     }

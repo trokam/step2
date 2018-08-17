@@ -23,18 +23,27 @@
 #  along with Trokam. If not, see <http://www.gnu.org/licenses/>.
 ########################################################################
 
-killall -q cruncher
+ZERO=0
+while [ $ZERO -eq 0 ]
+do
+    CRUNCHER_LOG=$HOME'/trokam/log/cruncher_'$(date +%Y_%m_%d_%H_%M)'.log'
+    START=$(date +%s.%N)
+    ./bin/cruncher --pages-limit 1000 > $CRUNCHER_LOG 2>&1
+    state=$?
+    END=$(date +%s.%N)
+    DIFF=$(echo "$END - $START" | bc)
+    echo "Time elapsed= " $DIFF >> $CRUNCHER_LOG
 
-CRUNCHER_LOG=$HOME'/trokam/log/cruncher_'$(date +%Y_%m_%d_%H_%M)'.log'
-START=$(date +%s.%N)
-./bin/cruncher > $CRUNCHER_LOG 2>&1
-END=$(date +%s.%N)
-DIFF=$(echo "$END - $START" | bc)
-echo "Time elapsed= " $DIFF >> $CRUNCHER_LOG
+    FEEDER_LOG=$HOME'/trokam/log/feeder_'$(date +%Y_%m_%d_%H_%M)'.log'
+    START=$(date +%s.%N)
+    ./bin/feeder > $FEEDER_LOG 2>&1
+    END=$(date +%s.%N)
+    DIFF=$(echo "$END - $START" | bc)
+    echo "Time elapsed= " $DIFF >> $FEEDER_LOG
 
-FEEDER_LOG=$HOME'/trokam/log/feeder_'$(date +%Y_%m_%d_%H_%M)'.log'
-START=$(date +%s.%N)
-./bin/feeder > $FEEDER_LOG 2>&1
-END=$(date +%s.%N)
-DIFF=$(echo "$END - $START" | bc)
-echo "Time elapsed= " $DIFF >> $FEEDER_LOG
+    if [ $state -gt 0 ]
+    then
+        echo "script is terminated" >> $CRUNCHER_LOG
+        exit 1
+    fi
+done
