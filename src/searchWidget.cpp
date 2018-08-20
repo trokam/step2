@@ -29,10 +29,14 @@
 #include <boost/thread.hpp>
 
 /// Wt
+#include <Wt/WDialog.h>
+#include <Wt/WEnvironment.h>
 #include <Wt/WMenu.h>
 #include <Wt/WLineEdit.h>
 #include <Wt/WHBoxLayout.h>
 #include <Wt/WProgressBar.h>
+#include <Wt/WPushButton.h>
+#include <Wt/WMessageBox.h>
 #include <Wt/WStackedWidget.h>
 #include <Wt/WVBoxLayout.h>
 #include <Wt/WText.h>
@@ -55,7 +59,7 @@ Trokam::SearchWidget::SearchWidget(boost::shared_ptr<Trokam::SharedResources> &s
 
     addStyleClass("container-fluid");
 
-    setDbTimeOut();
+    // setDbTimeOut();
 
     /**
      * Main AboutWidget
@@ -231,6 +235,8 @@ void Trokam::SearchWidget::searchForPhrases()
     std::string text= userInput->text().toUTF8();
     boost::algorithm::to_lower(text);
 
+    setDbTimeOut(1);
+
     if(text.length() >= 2)
     {
         sequenceCollection.clear();
@@ -372,12 +378,12 @@ void Trokam::SearchWidget::insertSequence(const Trokam::Sequence &seq)
     sequenceCollection.push_back(seq);
 }
 
-void Trokam::SearchWidget::setDbTimeOut()
+void Trokam::SearchWidget::setDbTimeOut(const int &timeOutSeconds)
 {
     Wt::log("info") << __PRETTY_FUNCTION__;
 
     std::string statement;
-    statement = "SET statement_timeout = 1000";
+    statement = "SET statement_timeout = " + std::to_string(timeOutSeconds * 1000);
 
     for(size_t i=0; i<resources->dbCluster.size(); i++)
     {
@@ -394,6 +400,8 @@ void Trokam::SearchWidget::setDbTimeOut()
 
 void Trokam::SearchWidget::search(const std::string &terms)
 {
+    setDbTimeOut(4);
+
     std::string lowCaseTerms= terms;
     boost::algorithm::to_lower(lowCaseTerms);
 
@@ -467,13 +475,27 @@ void Trokam::SearchWidget::search(const std::string &terms)
                   + "</strong> / relevance in body: <strong>" + std::to_string(results[i].relevanceInBody)
                   + "</strong> / relevance in URL: <strong>" + std::to_string(results[i].relevanceInUrl)
                   + "</strong> / relevance in title: <strong>" + std::to_string(results[i].relevanceInTitle)
-                  + "</strong> / total relevance: <strong>" + std::to_string(results[i].relevanceTotal)  + "</strong></span><br/>";
+                  + "</strong> / total relevance: <strong>" + std::to_string(results[i].relevanceTotal)
+                  + "</strong></span><br/>${button}";
             out+= "</p>";
             out+= "&nbsp;<br/>";
 
-            auto text= Wt::cpp14::make_unique<Wt::WText>(out);
-            text->setTextFormat(Wt::TextFormat::UnsafeXHTML);
-            userFindings->elementAt(i, 0)->addWidget(std::move(text));
+            // auto oneRow = Wt::cpp14::make_unique<Wt::WTemplate>(out);
+            auto oneRow = Wt::cpp14::make_unique<Wt::WTemplate>();
+            oneRow->setTemplateText(out, Wt::TextFormat::UnsafeXHTML);
+
+            const std::string title= results[i].title;
+            const std::string url=   results[i].url;
+            const int dbId=          results[i].dbId;
+
+            auto fullInfo = oneRow->bindWidget("button", Wt::cpp14::make_unique<Wt::WPushButton>("page analysis"));
+            fullInfo->setStyleClass("btn btn-default btn-xs");
+            fullInfo->clicked().connect([=] {
+                                                showAnalysis(url, title, dbId, index);
+                                            });
+            fullInfo->setHidden(false);
+
+            userFindings->elementAt(i, 0)->addWidget(std::move(oneRow));
         }
     }
 }
@@ -509,6 +531,7 @@ void Trokam::SearchWidget::getFindings(const std::string &sentence,
 
             item.relevanceTotal=   item.relevanceTotal*matching;
             item.phraseMatching=   matching;
+            item.dbId=             dbId;
 
             bagFindings.push(item);
         }
@@ -544,12 +567,6 @@ void Trokam::SearchWidget::phrasesPopupSelect(Wt::WMenuItem *item)
 
     phraseOnFocus= -1;
 
-    /*
-    layout()->itemAt(0)->widget()->setHidden(false);
-    layout()->itemAt(1)->widget()->setHidden(true);
-    layout()->itemAt(3)->widget()->setHidden(true);
-    */
-
     layout()->itemAt(0)->widget()->setHidden(true);   /// General Info
     layout()->itemAt(1)->widget()->setHidden(false);  /// Small logo
     layout()->itemAt(2)->widget()->setHidden(true);   /// Big log
@@ -562,4 +579,115 @@ void Trokam::SearchWidget::phrasesPopupSelect(Wt::WMenuItem *item)
     application->processEvents();
 
     search(choice);
+}
+
+void Trokam::SearchWidget::showAnalysis(const std::string &url,
+                                        const std::string &title,
+                                        const int &dbId,
+                                        const std::string &urlIndex)
+{
+    Wt::log("info") << __PRETTY_FUNCTION__;
+    Wt::log("info") << "url: " << url << " dbId: " << dbId << " urlIndex: " << urlIndex;
+
+    setDbTimeOut(10);
+
+    auto pageInfo = std::make_unique<Wt::WTable>();
+
+    const Wt::WEnvironment& env = Wt::WApplication::instance()->environment();
+    if(env.agentIsMobileWebKit())
+    {
+        try
+        {
+            std::string statement;
+            statement = "SELECT value, relevance_in_body, relevance_in_url, relevance_in_title, relevance_total, crunched ";
+            statement+= "FROM words, findings ";
+            statement+= "WHERE findings.index_words=words.index ";
+            statement+= "AND index_page=" + urlIndex + " ";
+            statement+= "ORDER BY crunched DESC, relevance_total DESC ";
+            statement+= "LIMIT 7 ";
+
+            // Wt::log("info") << "statement: " << statement;
+
+            pageInfo->addStyleClass("table table-condensed table-striped");
+
+            pqxx::result answer;
+            resources->dbCluster[dbId]->execSql(statement, answer);
+
+            pageInfo->elementAt(0, 0)->addWidget(std::make_unique<Wt::WText>("<strong>phrase</strong>"));
+
+            int k= 1;
+            for (pqxx::result::iterator row = answer.begin(); row != answer.end(); row++)
+            {
+                pageInfo->elementAt(k, 0)->addWidget(std::make_unique<Wt::WText>(row[0].as(std::string())));
+                k++;
+            }
+        }
+        catch(const std::exception &e)
+        {
+            Wt::log("info") << "error: " << e.what();
+        }
+    }
+    else
+    {
+        try
+        {
+            std::string statement;
+            statement = "SELECT value, relevance_in_body, relevance_in_url, relevance_in_title, relevance_total, crunched ";
+            statement+= "FROM words, findings ";
+            statement+= "WHERE findings.index_words=words.index ";
+            statement+= "AND index_page=" + urlIndex + " ";
+            statement+= "ORDER BY crunched DESC, relevance_total DESC ";
+            statement+= "LIMIT 10 ";
+
+            // Wt::log("info") << "statement: " << statement;
+
+            pageInfo->addStyleClass("table table-striped");
+
+            pqxx::result answer;
+            resources->dbCluster[dbId]->execSql(statement, answer);
+
+            pageInfo->elementAt(0, 0)->addWidget(std::make_unique<Wt::WText>("<strong>phrase</strong>"));
+            pageInfo->elementAt(0, 1)->addWidget(std::make_unique<Wt::WText>("<strong>relev. in body</strong>"));
+            pageInfo->elementAt(0, 2)->addWidget(std::make_unique<Wt::WText>("<strong>relev. in url</strong>"));
+            pageInfo->elementAt(0, 3)->addWidget(std::make_unique<Wt::WText>("<strong>relev. in title</strong>"));
+
+            int k= 1;
+            for (pqxx::result::iterator row = answer.begin(); row != answer.end(); row++)
+            {
+                pageInfo->elementAt(k, 0)->addWidget(std::make_unique<Wt::WText>(row[0].as(std::string())));
+                pageInfo->elementAt(k, 1)->addWidget(std::make_unique<Wt::WText>(row[1].as(std::string())));
+                pageInfo->elementAt(k, 2)->addWidget(std::make_unique<Wt::WText>(row[2].as(std::string())));
+                pageInfo->elementAt(k, 3)->addWidget(std::make_unique<Wt::WText>(row[3].as(std::string())));
+                k++;
+            }
+        }
+        catch(const std::exception &e)
+        {
+            Wt::log("info") << "error: " << e.what();
+        }
+    }
+
+    auto header = std::make_unique<Wt::WText>(Wt::WString("URL: ") + url + Wt::WString("<br/>Title: ") + title);
+
+    auto analysisBox = addChild(std::make_unique<Wt::WDialog>("Most relevant phrases"));
+
+    auto closeButton = std::make_unique<Wt::WPushButton>("Close");
+    closeButton->addStyleClass("btn btn-primary");
+    closeButton->clicked().connect([=] {
+                                            removeChild(analysisBox);
+                                       });
+
+    /**
+     * Process the dialog result.
+     **/
+    analysisBox->finished().connect([=] {
+                                            removeChild(analysisBox);
+                                        });
+
+    analysisBox->titleBar()->addWidget(std::move(header));
+    analysisBox->contents()->addWidget(std::move(pageInfo));
+    analysisBox->footer()->addWidget(std::move(closeButton));
+    analysisBox->rejectWhenEscapePressed();
+    analysisBox->setModal(false);
+    analysisBox->show();
 }

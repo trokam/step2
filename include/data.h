@@ -61,6 +61,7 @@ namespace Trokam
         std::string snippet;
         std::string phrase;
         int phraseMatching;
+        int dbId;
     };
 }
 

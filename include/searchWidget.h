@@ -78,12 +78,17 @@ namespace Trokam
             void getPhrases(const std::string &sentence,
                             const int &dbId);
             void insertSequence(const Trokam::Sequence &seq);
-            void setDbTimeOut();
+            void setDbTimeOut(const int &timeOutSeconds);
             void search(const std::string &terms);
             void getFindings(const std::string &sentence,
                              const int &dbId,
                              const int &lenSearch);
             bool urlShown(const std::string &url);
+
+            void showAnalysis(const std::string &url,
+                              const std::string &title,
+                              const int &dbId,
+                              const std::string &urlIndex);
     };
 }
 
