@@ -55,6 +55,16 @@ const int INDEX_HTTP =                1;
 const int INDEX_HTTPS =               2;
 
 /**
+ * Object reference.
+ **/
+
+const int GENERAL_INFO =    0;
+const int SMALL_LOGO =      1;
+const int BIG_LOGO =        2;
+const int BRIEF_INTRO =     4;
+const int SEARCH_STATE =    5;
+
+/**
  * Database IDs.
  **/
 

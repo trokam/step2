@@ -39,7 +39,6 @@
 #include <Wt/WMessageBox.h>
 #include <Wt/WStackedWidget.h>
 #include <Wt/WVBoxLayout.h>
-#include <Wt/WText.h>
 #include <Wt/WTemplate.h>
 
 /// Trokam
@@ -100,6 +99,12 @@ Trokam::SearchWidget::SearchWidget(boost::shared_ptr<Trokam::SharedResources> &s
     vbox->addWidget(std::move(brief));
 
     /**
+     * Information about the results.
+     **/
+    auto infoResults = std::make_unique<Wt::WTemplate>(Wt::WString::tr("info-results"));
+    vbox->addWidget(std::move(infoResults));
+
+    /**
      * The box on which the results are displayed.
      **/
     auto subStack = std::make_unique<Wt::WStackedWidget>();
@@ -111,10 +116,11 @@ Trokam::SearchWidget::SearchWidget(boost::shared_ptr<Trokam::SharedResources> &s
     subStack->addWidget(std::move(findingsBox));
     vbox->addWidget(std::move(subStack), 1);
 
-    vbox->itemAt(0)->widget()->setHidden(false);  /// General Info
-    vbox->itemAt(1)->widget()->setHidden(true);   /// Small logo
-    vbox->itemAt(2)->widget()->setHidden(false);  /// Big log
-    vbox->itemAt(4)->widget()->setHidden(false);  /// Brief intro
+    vbox->itemAt(GENERAL_INFO)->widget()->setHidden(false);
+    vbox->itemAt(SMALL_LOGO)->widget()->setHidden(true);
+    vbox->itemAt(BIG_LOGO)->widget()->setHidden(false);
+    vbox->itemAt(BRIEF_INTRO)->widget()->setHidden(false);
+    vbox->itemAt(SEARCH_STATE)->widget()->setHidden(true);
 
     setLayout(std::move(vbox));
 
@@ -156,6 +162,7 @@ void Trokam::SearchWidget::keyPressedEntrance(const Wt::WKeyEvent &kEvent)
         layout()->itemAt(1)->widget()->setHidden(false);  /// Small logo
         layout()->itemAt(2)->widget()->setHidden(true);   /// Big log
         layout()->itemAt(4)->widget()->setHidden(true);   /// Brief intro
+        layout()->itemAt(SEARCH_STATE)->widget()->setHidden(true);
 
         application->processEvents();
 
@@ -320,6 +327,7 @@ void Trokam::SearchWidget::searchForPhrases()
     {
         phrasesPopup->setHidden(true);
         userFindings->clear();
+        layout()->itemAt(SEARCH_STATE)->widget()->setHidden(true);
     }
 }
 
@@ -458,45 +466,54 @@ void Trokam::SearchWidget::search(const std::string &terms)
     urlCollection.clear();
     userFindings->clear();
 
-    for(int i= 0; i<results.size(); i++)
+    layout()->itemAt(SEARCH_STATE)->widget()->setHidden(true);
+
+    if(results.size() != 0)
     {
-        if (urlShown(results[i].url) == false)
+        for(int i= 0; i<results.size(); i++)
         {
-            std::string snippet;
-            const std::string index= std::to_string(results[i].pageIndex);
+            if (urlShown(results[i].url) == false)
+            {
+                std::string snippet;
+                const std::string index= std::to_string(results[i].pageIndex);
 
-            std::string out;
-            out+= "<p>";
-            out+= "<span style=\"font-size:x-large;\">" + results[i].title + "</span><br/>";
-            out+= "<strong><a href=\"" + results[i].url + "\" target=\"_blank\">" + results[i].url + "</a></strong><br/>";
-            out+= results[i].snippet + "<br/>";
-            out+= "<span class=\"text-success\"> phrase: <strong>" + results[i].phrase
-                  + "</strong> / matching: <strong>" + std::to_string(results[i].phraseMatching)
-                  + "</strong> / relevance in body: <strong>" + std::to_string(results[i].relevanceInBody)
-                  + "</strong> / relevance in URL: <strong>" + std::to_string(results[i].relevanceInUrl)
-                  + "</strong> / relevance in title: <strong>" + std::to_string(results[i].relevanceInTitle)
-                  + "</strong> / total relevance: <strong>" + std::to_string(results[i].relevanceTotal)
-                  + "</strong></span><br/>${button}";
-            out+= "</p>";
-            out+= "&nbsp;<br/>";
+                std::string out;
+                out+= "<p>";
+                out+= "<span style=\"font-size:x-large;\">" + results[i].title + "</span><br/>";
+                out+= "<strong><a href=\"" + results[i].url + "\" target=\"_blank\">" + results[i].url + "</a></strong><br/>";
+                out+= results[i].snippet + "<br/>";
+                out+= "<span class=\"text-success\"> phrase: <strong>" + results[i].phrase
+                      + "</strong> / matching: <strong>" + std::to_string(results[i].phraseMatching)
+                      + "</strong> / relevance in body: <strong>" + std::to_string(results[i].relevanceInBody)
+                      + "</strong> / relevance in URL: <strong>" + std::to_string(results[i].relevanceInUrl)
+                      + "</strong> / relevance in title: <strong>" + std::to_string(results[i].relevanceInTitle)
+                      + "</strong> / total relevance: <strong>" + std::to_string(results[i].relevanceTotal)
+                      + "</strong></span><br/>${button}";
+                out+= "</p>";
+                out+= "&nbsp;<br/>";
 
-            // auto oneRow = Wt::cpp14::make_unique<Wt::WTemplate>(out);
-            auto oneRow = Wt::cpp14::make_unique<Wt::WTemplate>();
-            oneRow->setTemplateText(out, Wt::TextFormat::UnsafeXHTML);
+                // auto oneRow = Wt::cpp14::make_unique<Wt::WTemplate>(out);
+                auto oneRow = Wt::cpp14::make_unique<Wt::WTemplate>();
+                oneRow->setTemplateText(out, Wt::TextFormat::UnsafeXHTML);
 
-            const std::string title= results[i].title;
-            const std::string url=   results[i].url;
-            const int dbId=          results[i].dbId;
+                const std::string title= results[i].title;
+                const std::string url=   results[i].url;
+                const int dbId=          results[i].dbId;
 
-            auto fullInfo = oneRow->bindWidget("button", Wt::cpp14::make_unique<Wt::WPushButton>("page analysis"));
-            fullInfo->setStyleClass("btn btn-default btn-xs");
-            fullInfo->clicked().connect([=] {
-                                                showAnalysis(url, title, dbId, index);
-                                            });
-            fullInfo->setHidden(false);
+                auto fullInfo = oneRow->bindWidget("button", Wt::cpp14::make_unique<Wt::WPushButton>("page analysis"));
+                fullInfo->setStyleClass("btn btn-default btn-xs");
+                fullInfo->clicked().connect([=] {
+                                                    showAnalysis(url, title, dbId, index);
+                                                });
+                fullInfo->setHidden(false);
 
-            userFindings->elementAt(i, 0)->addWidget(std::move(oneRow));
+                userFindings->elementAt(i, 0)->addWidget(std::move(oneRow));
+            }
         }
+    }
+    else
+    {
+        layout()->itemAt(SEARCH_STATE)->widget()->setHidden(false);
     }
 }
 

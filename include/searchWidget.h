@@ -36,6 +36,7 @@
 #include <Wt/WLineEdit.h>
 #include <Wt/WPopupMenu.h>
 #include <Wt/WTable.h>
+#include <Wt/WText.h>
 #include <Wt/WTimer.h>
 
 /// Trokam
@@ -59,10 +60,12 @@ namespace Trokam
             int phraseOnFocus;
 
             std::unique_ptr<Wt::WPopupMenu> phrasesPopup;
+            std::unique_ptr<Wt::WText>      searchState;
 
             Wt::WLineEdit *userInput;
             Wt::WTable    *userFindings;
             Wt::WTimer    *timer;
+
             std::vector<Trokam::Sequence> sequenceCollection;
             boost::lockfree::stack<Trokam::Sequence> bagPhrases{100};
             boost::lockfree::stack<Trokam::Findings> bagFindings{100};
