@@ -35,7 +35,7 @@ CREATE TABLE public.page(
 	index serial NOT NULL,
 	index_protocol smallint,
 	index_domain integer,
-	path varchar(1000),
+	path varchar(2047), -- máximo según RFC https://tools.ietf.org/html/rfc3986
 	level integer NOT NULL,
 	processing bool NOT NULL,
 	crunched integer NOT NULL,
@@ -83,7 +83,7 @@ ON DELETE SET NULL ON UPDATE CASCADE;
 -- DROP TABLE IF EXISTS public.trait CASCADE;
 CREATE TABLE public.trait(
 	index_page integer,
-	title varchar(1000) NOT NULL,
+	title text NOT NULL, -- El texto es ilimitado para gran parte de los navegadores, varchar es menos efectivo
 	content_size integer NOT NULL,
 	complexity float NOT NULL,
 	forwarded varchar(1000) NOT NULL
@@ -108,7 +108,7 @@ ALTER TABLE public.trait ADD CONSTRAINT trait_uq UNIQUE (index_page);
 -- DROP TABLE IF EXISTS public.domain CASCADE;
 CREATE TABLE public.domain(
 	index serial NOT NULL,
-	value varchar(250) NOT NULL,
+	value varchar(255) NOT NULL, -- máximo es 255 según RFC https://tools.ietf.org/html/rfc3986
 	type smallint NOT NULL,
 	CONSTRAINT domain_pkey PRIMARY KEY (index),
 	CONSTRAINT domain_unique UNIQUE (value)
